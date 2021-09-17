@@ -1,0 +1,3 @@
+[submodule "array_fitting_tools"]
+	path = array_fitting_tools
+	url = https://github.com/GreenleafLab/array_fitting_tools.git
