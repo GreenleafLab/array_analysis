@@ -1,0 +1,7 @@
+*.*
+!Snakefile
+!.gitignore
+!*.py
+!*.ipynb
+!*.sh
+!*.md
