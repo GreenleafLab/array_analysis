@@ -1,0 +1,23 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+CPfluor2CPseries        1              1              1
+total                   1              1              1
+
+Select jobs to execute...
+
+[Mon Sep 20 22:36:40 2021]
+rule CPfluor2CPseries:
+    input: data/CPfluor/test.CPfluor
+    output: data/CPseries/test.CPseries
+    jobid: 0
+    resources: tmpdir=/var/folders/bz/8gjs6m457yq0t4s2wdw3xh9h0000gn/T
+
+[Mon Sep 20 22:36:45 2021]
+Finished job 0.
+1 of 1 steps (100%) done
+Complete log: /Users/yuxi/workspace/array_analysis/.snakemake/log/2021-09-20T223639.212629.snakemake.log

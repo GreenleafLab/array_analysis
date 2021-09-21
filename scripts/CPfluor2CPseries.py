@@ -2,12 +2,11 @@
 Wrapper's of Sarah Denny's codebase for snakemake workflow for the NNN project.
 Yuxi Ke, Sep 2021
 """
-import snakemake
-import pandas as pd
-from array_fitting_tools.bin.fittinglibs import processing
+# import pandas as pd
+from array_fitting_tools.bin_py3.fittinglibs import processing
 
-signal = processing.getSignalFromCPFluor(snakemake.input)
-signal.to_csv(snakemake.output)
+signal = processing.getSignalFromCPFluor(snakemake.input[0])
+signal.to_csv(snakemake.output[0])
 
 # def makeCPseriesTilefile(CPfluorfile, CPseriesfile):
 #     """
