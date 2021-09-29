@@ -1,0 +1,6 @@
+FileNotFoundError in line 2 of /home/users/kyx/array_analysis/Snakefile:
+[Errno 2] No such file or directory: '../config/test.map'
+  File "/home/users/kyx/array_analysis/Snakefile", line 2, in <module>
+  File "/home/users/kyx/array_analysis/scripts/getSnakeConfig.py", line 44, in <module>
+  File "/home/users/kyx/array_analysis/scripts/getSnakeConfig.py", line 33, in parse_fluorfiles_from_mapfile
+  File "/home/users/kyx/array_analysis/scripts/getSnakeConfig.py", line 13, in parse_mapfile

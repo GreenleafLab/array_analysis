@@ -1,0 +1,33 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+CPfluor2CPseries        1              1              1
+total                   1              1              1
+
+Select jobs to execute...
+
+[Wed Sep 29 12:59:22 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile18_green_600ms_2011.07.27-13.44.52.953.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile18_green_600ms_2011.07.27-13.44.52.953.CPseries
+    jobid: 0
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile18_green_600ms_2011.07.27-13.44.52.953
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 12:59:23 2021]
+Error in rule CPfluor2CPseries:
+    jobid: 0
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile18_green_600ms_2011.07.27-13.44.52.953.CPseries
+
+RuleException:
+CalledProcessError in line 20 of /home/users/kyx/array_analysis/Snakefile:
+Command 'set -euo pipefail;  /home/users/kyx/miniconda3/envs/snakemake/bin/python3.9 /home/users/kyx/array_analysis/.snakemake/scripts/tmprdn6ip16.CPfluor2CPseries.py' returned non-zero exit status 1.
+  File "/home/users/kyx/array_analysis/Snakefile", line 20, in __rule_CPfluor2CPseries
+  File "/home/users/kyx/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/users/kyx/array_analysis/.snakemake/log/2021-09-29T125920.952499.snakemake.log

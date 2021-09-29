@@ -1,2 +1,8 @@
-mapfile:
-    test.map
+fluordir:
+    /scratch/users/kyx/fluor_dir
+seriesdir:
+    /scratch/users/kyx/series_dir
+fluorconds:
+    15_Green_15C
+    15_Red_15C
+

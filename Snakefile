@@ -1,16 +1,21 @@
 import os
-# import scripts.getSnakeConfig as snakeconfig
+import scripts.getSnakeConfig as snakeconfig
 
-# configfile: "config.yaml"
+#configfile: "config/config.yaml"
 
-# fluorfile,  = snakeconfig.parse_mapfile(config['mapfile'])
-# CHANNELS = ["Green", "Red"]
+fluorfiles, seriesfiles = snakeconfig.parse_fluorfiles_from_mapfile('config/test.map')
+
+#wildcard_constraints:
+
+
+rule all:
+    input: seriesfiles
 
 rule CPfluor2CPseries:
     input:
-        "data/CPfluor/test.CPfluor"
+        "{basedir}/fluor_dir/{round}/{tile}.CPfluor"
     output:
-        "data/CPseries/test.CPseries"
+        "{basedir}/series_dir/{round}/{tile}.CPseries"
     script:
         "scripts/CPfluor2CPseries.py"
 

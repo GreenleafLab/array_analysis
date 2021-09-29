@@ -1,0 +1,39 @@
+Building DAG of jobs...
+MissingInputException in line 9 of /home/users/kyx/array_analysis/Snakefile:
+Missing input files for rule all:
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile4_green_600ms_2011.07.27-13.42.50.703.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile10_green_600ms_2011.07.27-13.43.43.453.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile15_green_600ms_2011.07.27-13.44.27.640.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile2_red_600ms_2011.07.27-13.42.36.468.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile4_red_600ms_2011.07.27-13.42.54.078.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile7_green_600ms_2011.07.27-13.43.17.421.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile6_green_600ms_2011.07.27-13.43.08.328.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile17_green_600ms_2011.07.27-13.44.44.109.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile11_green_600ms_2011.07.27-13.43.52.359.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile13_green_600ms_2011.07.27-13.44.09.718.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile12_red_600ms_2011.07.27-13.44.04.250.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile6_red_600ms_2011.07.27-13.43.11.796.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile13_red_600ms_2011.07.27-13.44.13.046.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile18_green_600ms_2011.07.27-13.44.52.953.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile3_red_600ms_2011.07.27-13.42.45.250.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile14_green_600ms_2011.07.27-13.44.18.703.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile15_red_600ms_2011.07.27-13.44.31.078.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile1_red_600ms_2011.07.27-13.42.27.625.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile2_green_600ms_2011.07.27-13.42.33.187.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile3_green_600ms_2011.07.27-13.42.41.656.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile14_red_600ms_2011.07.27-13.44.22.015.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile10_red_600ms_2011.07.27-13.43.46.671.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile18_red_600ms_2011.07.27-13.44.56.203.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile16_red_600ms_2011.07.27-13.44.39.109.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile5_green_600ms_2011.07.27-13.42.59.796.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile9_green_600ms_2011.07.27-13.43.35.109.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile5_red_600ms_2011.07.27-13.43.03.125.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile1_green_600ms_2011.07.27-13.42.24.171.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile9_red_600ms_2011.07.27-13.43.38.296.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile16_green_600ms_2011.07.27-13.44.36.156.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile8_red_600ms_2011.07.27-13.43.29.218.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile12_green_600ms_2011.07.27-13.44.00.359.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile7_red_600ms_2011.07.27-13.43.20.703.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile17_red_600ms_2011.07.27-13.44.47.296.CPseries
+/scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile8_green_600ms_2011.07.27-13.43.25.828.CPseries
+/scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile11_red_600ms_2011.07.27-13.43.55.046.CPseries
