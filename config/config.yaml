@@ -1,8 +1,19 @@
+datadir:
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct4_snakemake/data/
+fastq:
+    read1:
+        /scratch/groups/wjg/kyx/NNNlib2b_Oct4/sequence/NNNlib2b_S1_L001_R1_001.fastq
+    read2:
+        /scratch/groups/wjg/kyx/NNNlib2b_Oct4/sequence/NNNlib2b_S1_L001_R2_001.fastq
+FIDfilter:
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct4/sequence/FID.CPfilter
+mapfile:
+    config/nnnlib2.map
 fluordir:
     /scratch/users/kyx/fluor_dir
 seriesdir:
     /scratch/users/kyx/series_dir
-fluorconds:
-    15_Green_15C
-    15_Red_15C
+
+
+
 
