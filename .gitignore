@@ -1,4 +1,6 @@
 .snakemake/*
+.slurm-logs/*
+*~
 *.pyc
 *.py~
 *.py#

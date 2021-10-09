@@ -1,15 +1,16 @@
 import os
-import scripts.getSnakeConfig as snakeconfig
+#import scripts.getSnakeConfig as snakeconfig
 
-configfile: "config/config.yaml"
+configfile: "config/config_NNNlib2b_Oct6.yaml"
 DATADIR = config['datadir']
 
-_,_,_,ROUNDS = snakeconfig.parse_mapfile('config/nnnlib2.map')
-fluorfiles, seriesfiles = snakeconfig.parse_fluorfiles_from_mapfile('config/nnnlib2.map')
+#_,_,_,ROUNDS = snakeconfig.parse_mapfile('config/nnnlib2.map')
+#fluorfiles, seriesfiles = snakeconfig.parse_fluorfiles_from_mapfile('config/nnnlib2.map')
 
 # hardcoded tile numbers
-TILES = ['tile%03d'%i for i in range(1,20)]
-TILES.remove('tile005')
+#TILES = ['tile%03d'%i for i in range(1,20)]
+TILES = ['tile001']
+#TILES.remove('tile005')
 
 #wildcard_constraints:
 
@@ -31,10 +32,10 @@ rule merge_fastqs_to_CPseq:
         cluster_time = "10:00:00"
     threads:
         2
+    conda:
+        "envs/ame.yml"
     shell:
         """
-        source ~/.bashrc
-        conda activate ame
         python scripts/array_tools/CPscripts/mergeFastqReadsToCPseq.py -r1 {input.r1} -r2 {input.r2} -o {output} 
         """
 
@@ -50,10 +51,10 @@ rule split_CPseq:
         cluster_memory = "1G",
         cluster_time = "5:00:00",
         tiledir = DATADIR + "tiles/"
+    conda:
+        "envs/ame.yml"
     shell:
         """
-        source ~/.bashrc
-        conda activate ame
         python scripts/array_tools/CPscripts/splitCPseqIntoTiles.py -o {params.tiledir} -s bottom {input}
         """
 
@@ -64,18 +65,22 @@ rule filter_tiles:
         expand(DATADIR + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
     params:
         tiledir = DATADIR + "tiles/",
-        filteredtiledir = DATADIR + "filtered_tiles/"
+        filteredtiledir = DATADIR + "filtered_tiles/",
+        cluster_memory = "16G",
+        cluster_time = "5:00:00"
+    conda:
+        "envs/ame.yml"
+    #envmodules:
+    #    "matlab"
     threads:
-        18  
+        8  
     shell:
         """
-        source ~/.bashrc
-        conda activate ame
         module load matlab
         export MATLABPATH=/share/PI/wjg/lab/array_tools/CPscripts/:/share/PI/wjg/lab/array_tools/CPlibs/
-        python scripts/array_tools/CPscripts/alignmentFilterMultiple.py -rd {params.tiledir} -f config['FIDfilter'] -od {params.filteredtiledir} -gv /share/PI/wjg/lab/array_tools -n 18 
+        python scripts/array_tools/CPscripts/alignmentFilterMultiple.py -rd {params.tiledir} -f {config[FIDfilter]} -od {params.filteredtiledir} -gv /share/PI/wjg/lab/array_tools -n 18 
         """
-
+"""
 rule integrate_signal:
     input:
         "{datadir}/fluor/{round}/{tile}.CPfluor"
@@ -87,7 +92,7 @@ rule integrate_signal:
 rule merge_signal_2_series:
     input:
         "{datadir}/signal/{round}/"
-"""
+
 rule normalize:
     input:
         signal=""
