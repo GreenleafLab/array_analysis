@@ -1,19 +1,18 @@
 import os
 #import scripts.getSnakeConfig as snakeconfig
 
+####### SELECT CONFIG FILE HERE #######
 configfile: "config/config_NNNlib2b_Oct6.yaml"
+#######################################
+
 DATADIR = config['datadir']
+# hardcoded tile numbers
+TILES = ['tile%03d'%i for i in range(1,20)]
 
 #_,_,_,ROUNDS = snakeconfig.parse_mapfile('config/nnnlib2.map')
 #fluorfiles, seriesfiles = snakeconfig.parse_fluorfiles_from_mapfile('config/nnnlib2.map')
 
-# hardcoded tile numbers
-#TILES = ['tile%03d'%i for i in range(1,20)]
-TILES = ['tile001']
-#TILES.remove('tile005')
-
 #wildcard_constraints:
-
 
 rule all:
     input: expand(DATADIR + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
@@ -80,6 +79,17 @@ rule filter_tiles:
         export MATLABPATH=/share/PI/wjg/lab/array_tools/CPscripts/:/share/PI/wjg/lab/array_tools/CPlibs/
         python scripts/array_tools/CPscripts/alignmentFilterMultiple.py -rd {params.tiledir} -f {config[FIDfilter]} -od {params.filteredtiledir} -gv /share/PI/wjg/lab/array_tools -n 18 
         """
+
+rule plot_fiducials:
+    input:
+        expand(DATADIR + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
+    output:
+        expand(DATADIR + "fig/{tile}_Bottom_fiducial.png", tile=TILES)
+    threads:
+        2
+    script:
+        "scripts/plot_seqs.py"
+
 """
 rule integrate_signal:
     input:
