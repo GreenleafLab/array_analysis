@@ -1,0 +1,9 @@
+name: plotting
+dependencies:
+  - python=3.7
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - seaborn
+  - plotly

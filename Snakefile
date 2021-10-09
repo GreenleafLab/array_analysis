@@ -85,8 +85,10 @@ rule plot_fiducials:
         expand(DATADIR + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
     output:
         expand(DATADIR + "fig/{tile}_Bottom_fiducial.png", tile=TILES)
+    conda:
+        "envs/plotting.yml"
     threads:
-        2
+        1
     script:
         "scripts/plot_seqs.py"
 

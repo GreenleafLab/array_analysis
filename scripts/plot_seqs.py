@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-import os
 
 def plot_species_per_tile(file_name, contains=None, color = 'b'):
     """
