@@ -6,6 +6,8 @@ configfile: "config/config_NNNlib2b_Oct6.yaml"
 #######################################
 
 DATADIR = config['datadir']
+EXPDIR = os.path.normpath(DATADIR + '/../') + '/'
+print(EXPDIR)
 # hardcoded tile numbers
 TILES = ['tile%03d'%i for i in range(1,20)]
 
@@ -15,8 +17,8 @@ TILES = ['tile%03d'%i for i in range(1,20)]
 #wildcard_constraints:
 
 rule all:
-    input: expand(DATADIR + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
-
+    #input: expand(DATADIR + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
+    input: expand(EXPDIR + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)
 
 #STRSTAMP, TILES = glob_wildcards(DATADIR + "tiles/{strstamp}_ALL_{tile}_Bottom.CPseq")
 
@@ -84,7 +86,7 @@ rule plot_fiducials:
     input:
         expand(DATADIR + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
     output:
-        expand(DATADIR + "fig/{tile}_Bottom_fiducial.png", tile=TILES)
+        expand(EXPDIR + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)
     conda:
         "envs/plotting.yml"
     threads:
