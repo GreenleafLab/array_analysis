@@ -89,6 +89,8 @@ rule plot_fiducials:
         expand(EXPDIR + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)
     conda:
         "envs/plotting.yml"
+    params:
+        cluster_memory = "4G"
     threads:
         1
     script:
