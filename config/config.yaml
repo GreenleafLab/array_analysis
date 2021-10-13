@@ -8,12 +8,7 @@ fastq:
 FIDfilter:
     /scratch/groups/wjg/kyx/NNNlib2b_Oct4/sequence/FID.CPfilter
 mapfile:
-    config/nnnlib2.map
-fluordir:
-    /scratch/users/kyx/fluor_dir
-seriesdir:
-    /scratch/users/kyx/series_dir
-
+    config/nnnlib2_map.csv
 
 
 
