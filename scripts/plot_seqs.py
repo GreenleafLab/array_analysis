@@ -6,27 +6,20 @@ def plot_species_per_tile(file_name, contains=None, color = 'b'):
     Args:
         file_name - str, name of 1 filtered tiles CPseq file
     """
-    # Using readlines()
-    file1 = open(file_name, 'r')
-    Lines = file1.readlines()
-
     x_s = []
     y_s = []
-    for i in tqdm(range(len(Lines))):
-        line = Lines[i]
-        # Look for lines that are the matching ID
-        if line[:6] == 'M03796':
-            line_split = line.split("\t") 
-            if contains in line_split[1] or contains in line_split[2] or contains in line_split[4]:
-                locations = line_split[0].split(":")
+
+    with open(file_name, 'r') as fil:
+
+        for line in tqdm(fil):
+            linesplit = line.split("\t")
+            if (contains in linesplit[1]) or (contains in linesplit[2]) or (contains in linesplit[4]):
+                locations = linesplit[0].split(":")
                 x = int(locations[5])
                 y = int(locations[6])*-1
                 x_s.append(x)
                 y_s.append(y)
     
-    
-    print(x_s)
-    print('here')
     plt.scatter(x_s, y_s, s=1, c = color)
 
 
@@ -36,10 +29,10 @@ def plot_fiducial_in_tile(CPseq_name, fig_name):
         CPseq_name - str, name of 1 filtered tiles CPseq file
         fig_name - str, output
     """
-    plt.figure(figsize=(14,11))
+    plt.figure(figsize=(11,11))
 
     # plot one or multiple species here
-    plot_species_per_tile(CPseq_name, 'FID', 'k')# fiducial blue
+    plot_species_per_tile(CPseq_name, 'FID', 'k')
 
     plt.axis('off')
     plt.savefig(fig_name, dpi=300, bbox_inches='tight')
