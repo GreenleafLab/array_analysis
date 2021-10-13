@@ -9,7 +9,7 @@ DATADIR = config['datadir']
 EXPDIR = os.path.normpath(DATADIR + '/../') + '/'
 print(EXPDIR)
 # hardcoded tile numbers
-TILES = ['tile%03d'%i for i in range(1,20)]
+TILES = ['tile%03d'%i for i in range(1,19)]
 
 #_,_,_,ROUNDS = snakeconfig.parse_mapfile('config/nnnlib2.map')
 #fluorfiles, seriesfiles = snakeconfig.parse_fluorfiles_from_mapfile('config/nnnlib2.map')
