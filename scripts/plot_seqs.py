@@ -15,7 +15,7 @@ def plot_species_per_tile(file_name, contains=None, color = 'b'):
     for i in tqdm(range(len(Lines))):
         line = Lines[i]
         # Look for lines that are the matching ID
-        if line[:6] == 'M00653':
+        if line[:6] == 'M03796':
             line_split = line.split("\t") 
             if contains in line_split[1] or contains in line_split[2] or contains in line_split[4]:
                 locations = line_split[0].split(":")
@@ -23,7 +23,10 @@ def plot_species_per_tile(file_name, contains=None, color = 'b'):
                 y = int(locations[6])*-1
                 x_s.append(x)
                 y_s.append(y)
-
+    
+    
+    print(x_s)
+    print('here')
     plt.scatter(x_s, y_s, s=1, c = color)
 
 
