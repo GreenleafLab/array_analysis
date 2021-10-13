@@ -4,6 +4,6 @@ dependencies:
   - numpy
   - pandas
   - pip:
-    tqdm
-    nwalign3
-    pandarallel
+    - tqdm
+    - nwalign3
+    - pandarallel

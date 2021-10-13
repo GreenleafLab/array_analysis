@@ -5,9 +5,9 @@ import os
 configfile: "config/config_NNNlib2b_Oct6.yaml"
 #######################################
 
-DATADIR = config['datadir']
-EXPDIR = os.path.normpath(DATADIR + '/../') + '/'
-print(EXPDIR)
+datadir = config['datadir']
+expdir = os.path.normpath(datadir + '/../') + '/'
+print(expdir)
 # hardcoded tile numbers
 TILES = ['tile%03d'%i for i in range(1,19)]
 
@@ -17,17 +17,17 @@ TILES = ['tile%03d'%i for i in range(1,19)]
 #wildcard_constraints:
 
 rule all:
-    #input: expand(DATADIR + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
-    input: expand(EXPDIR + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)
+    #input: expand(datadir + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
+    input: expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)
 
-#STRSTAMP, TILES = glob_wildcards(DATADIR + "tiles/{strstamp}_ALL_{tile}_Bottom.CPseq")
+#STRSTAMP, TILES = glob_wildcards(datadir + "tiles/{strstamp}_ALL_{tile}_Bottom.CPseq")
 
 rule merge_fastqs_to_CPseq:
     input:
         r1 = config['fastq']['read1'],
         r2 = config['fastq']['read2']
     output:
-        DATADIR + "sequence/ALL.CPseq"
+        datadir + "sequence/ALL.CPseq"
     params:
         cluster_memory = "10G",
         cluster_time = "10:00:00"
@@ -42,16 +42,16 @@ rule merge_fastqs_to_CPseq:
 
 rule split_CPseq:
     input:
-        DATADIR + "sequence/ALL.CPseq"
+        datadir + "sequence/ALL.CPseq"
     output:
-        #directory(DATADIR + "tiles/")
-        expand(DATADIR + "tiles/ALL_{tile}_Bottom.CPseq", tile=TILES)
+        #directory(datadir + "tiles/")
+        expand(datadir + "tiles/ALL_{tile}_Bottom.CPseq", tile=TILES)
     threads:
         1
     params:
         cluster_memory = "1G",
         cluster_time = "5:00:00",
-        tiledir = DATADIR + "tiles/"
+        tiledir = datadir + "tiles/"
     conda:
         "envs/ame.yml"
     shell:
@@ -61,12 +61,12 @@ rule split_CPseq:
 
 rule filter_tiles:
     input:
-        expand(DATADIR + "tiles/ALL_{tile}_Bottom.CPseq", tile=TILES)
+        expand(datadir + "tiles/ALL_{tile}_Bottom.CPseq", tile=TILES)
     output:
-        expand(DATADIR + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
+        expand(datadir + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
     params:
-        tiledir = DATADIR + "tiles/",
-        filteredtiledir = DATADIR + "filtered_tiles/",
+        tiledir = datadir + "tiles/",
+        filteredtiledir = datadir + "filtered_tiles/",
         cluster_memory = "16G",
         cluster_time = "5:00:00"
     conda:
@@ -84,9 +84,9 @@ rule filter_tiles:
 
 rule plot_fiducials:
     input:
-        expand(DATADIR + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
+        expand(datadir + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
     output:
-        expand(EXPDIR + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)
+        expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)
     conda:
         "envs/plotting.yml"
     params:
@@ -96,18 +96,18 @@ rule plot_fiducials:
     script:
         "scripts/plot_seqs.py"
 
-"""
+
 rule integrate_signal:
     input:
-        "{datadir}/fluor/{round}/{tile}.CPfluor"
+        expand(datadir + "fluor/{round}/{tile}.CPfluor", round=config['rounds'], tile=TILES)
     output:
-        "{datadir}/signal/{round}/{tile}.CPseries"
+        datadir + "signal/CPseries.h5"
+    params:
+        fluordir = datadir + 'fluor/'
     script:
         "scripts/integrateSignal.py"
 
-rule merge_signal_2_series:
-    input:
-        "{datadir}/signal/{round}/"
+"""
 
 rule normalize:
     input:
