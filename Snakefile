@@ -1,26 +1,35 @@
 import os
-#import scripts.getSnakeConfig as snakeconfig
+from scripts.util import *
 
 ####### SELECT CONFIG FILE HERE #######
 configfile: "config/config_NNNlib2b_Oct6.yaml"
 #######################################
 
+# --- Define Global Variables --- #
+
 datadir = config['datadir']
 expdir = os.path.normpath(datadir + '/../') + '/'
-print(expdir)
+
 # hardcoded tile numbers
 TILES = ['tile%03d'%i for i in range(1,19)]
+TILES_NO_ZERO_PAD = ['tile%d'%i for i in range(1,19)]
 
-#_,_,_,ROUNDS = snakeconfig.parse_mapfile('config/nnnlib2.map')
-#fluorfiles, seriesfiles = snakeconfig.parse_fluorfiles_from_mapfile('config/nnnlib2.map')
-
+fluor_files = get_fluor_names_from_mapfile(config["mapfile"], config["tifdir"], config["fluordir"])
+#print(fluor_files)
 #wildcard_constraints:
 
+# --- Define Required Output --- #
+
 rule all:
-    #input: expand(datadir + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
-    input: expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)
+    input: 
+        expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES),
+        fluor_files
+        #datadir + "fluor/Green16_25/NNNlib2b_DNA_tile1_green_600ms_2011.10.22-16.51.13.953.CPfluor"
+        #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)
 
 #STRSTAMP, TILES = glob_wildcards(datadir + "tiles/{strstamp}_ALL_{tile}_Bottom.CPseq")
+
+# --- Rules --- #
 
 rule merge_fastqs_to_CPseq:
     input:
@@ -61,7 +70,8 @@ rule split_CPseq:
 
 rule filter_tiles:
     input:
-        expand(datadir + "tiles/ALL_{tile}_Bottom.CPseq", tile=TILES)
+        expand(datadir + "tiles/ALL_{tile}_Bottom.CPseq", tile=TILES),
+        config["FIDfilter"]
     output:
         expand(datadir + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
     params:
@@ -81,7 +91,29 @@ rule filter_tiles:
         export MATLABPATH=/share/PI/wjg/lab/array_tools/CPscripts/:/share/PI/wjg/lab/array_tools/CPlibs/
         python scripts/array_tools/CPscripts/alignmentFilterMultiple.py -rd {params.tiledir} -f {config[FIDfilter]} -od {params.filteredtiledir} -gv /share/PI/wjg/lab/array_tools -n 18 
         """
+rule filter_tiles_libregion:
+    input:
+        expand(datadir + "tiles/ALL_{tile}_Bottom.CPseq", tile=TILES),
+        config["LibRegionFilter"]
+    output:
+        expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
+    params:
+        tiledir = datadir + "tiles/",
+        filteredtiledir = datadir + "filtered_tiles_libregion/",
+        cluster_memory = "16G",
+        cluster_time = "5:00:00"
+    conda:
+        "envs/ame.yml"
+    threads:
+        8
+    shell:
+        """
+        module load matlab
+        export MATLABPATH=scripts/array_tools/CPscripts/:scripts/array_tools/CPlibs/
+        python scripts/array_tools/CPscripts/alignmentFilterMultiple.py -rd {params.tiledir} -f {config[LibRegionFilter]} -od {params.filteredtiledir} -gv scripts/array_tools -n 18
+        """
 
+        
 rule plot_fiducials:
     input:
         expand(datadir + "filtered_tiles/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
@@ -96,7 +128,39 @@ rule plot_fiducials:
     script:
         "scripts/plot_seqs.py"
 
+## quantify_images: quantify intensities in tif and write to CPfluor
+## snakemake checks one tile per condition as input/output and submit one job per condition
+rule quantify_images:
+    input:
+        image = config["tifdir"] + "{condition}/%s_{tile}_{channel}_600ms_{timestamp}.tif" % config["experimentName"],
+        libregion = expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
+    output:
+        CPfluor = datadir + "fluor/{condition}/%s_{tile}_{channel}_600ms_{timestamp}.CPfluor" % config["experimentName"]#,
+        #roff = expand(datadir + "roff/{condition}/%s_{tile}_{channel}_600ms_{timestamp}.roff")
+    params:
+        image_dir = config["tifdir"] + "{condition}/",
+        seq_dir = datadir + "filtered_tiles_libregion/",
+        fluor_dir = config["fluordir"] + "{condition}/",
+        roff_dir = datadir + "roff/{condition}/",
+        reg_subset = "LibRegion",
+        log_dir = expdir + "log/quantify_image_{condition}.log",
+        num_cores = "18",
+        data_scaling = "MiSeq_to_TIRFStation1",
+        cluster_memory = "40G",
+        cluster_time = "15:00:00"
+    threads:
+        18
+    conda:
+        "envs/ame.yml"
+    shell:
+        """
+        module load matlab
+        export MATLABPATH=scripts/array_tools/CPscripts:scripts/array_tools/CPlibs
+        python scripts/array_tools/CPscripts/quantifyTilesDownstream.py -id {params.image_dir} -ftd {params.seq_dir} -fd {params.fluor_dir} -rod {params.roff_dir} -n {params.num_cores} -rs {params.reg_subset} -sf {params.data_scaling} -gv scripts/array_tools/
+        """
 
+
+"""
 rule integrate_signal:
     input:
         expand(datadir + "fluor/{round}/{tile}.CPfluor", round=config['rounds'], tile=TILES)
@@ -104,10 +168,11 @@ rule integrate_signal:
         datadir + "signal/CPseries.h5"
     params:
         fluordir = datadir + 'fluor/'
-    script:
-        "scripts/integrateSignal.py"
+        signaldir = datadir + 'signal/'
+    shell:
+        "scripts/array_tool/bin_py3/processData.py -mf {config[mapfile]} -od {params.signaldir}"
 
-"""
+
 
 rule normalize:
     input:

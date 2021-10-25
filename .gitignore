@@ -4,3 +4,11 @@
 *.pyc
 *.py~
 *.py#
+*.tempLog
+scripts/test.py
+*.err
+*.out
+.#*
+#Snakemake#
+*.h5
+cpseriestest.csv

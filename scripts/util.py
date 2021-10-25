@@ -1,18 +1,45 @@
 import os
 import pandas as pd
 
+
+def get_fluor_names_from_mapfile(mapfile, tifdir, fluordir):
+    """
+    Get just 1 example tile fluor file name per condition for snakemake rule `quantify_images`
+    Args:
+        mapfile - str
+            a csv file with the column 'condition'
+        tifdir - str, absolute directory for tif files, e.g. /.../data/images/
+        fluordir - str, absolute directory for CPfluor dirs, e.g. /.../data/fluor/
+    Returns:
+        fluor_names - List[str]
+    """
+    df = pd.read_csv(mapfile)
+    
+    fluor_names = []
+    for condition in df['condition']:
+        tif_condition_dir = os.path.join(tifdir, condition)
+        try:
+            tif_fn = next(s for s in os.listdir(tif_condition_dir) if s.endswith('.tif'))
+        except:
+            print("\nCannot find tif file for %s" % condition)
+            print(os.listdir(tif_condition_dir))
+        
+
+        fluor_names.append(os.path.join(fluordir, condition, tif_fn.strip('.tif') + '.CPfluor'))
+    return fluor_names
+
 def fill_sample_sheet(mapfile):
     """
     Fill tabular csv sample sheet.
     Args:
         mapfile - str
-            a csv file with the column 'image_set' 
+            a csv file with the column 'condition' 
             that's directory names e.g. '15_Green_15C'
     """
     df = pd.read_csv(mapfile)
-    df['channel'] = df['image_set'].apply(lambda s: s.split('_')[1])
-    df['condition'] = df['image_set'].apply(lambda s: s.split('_')[2])
-    df['is_temperature'] = df['condition'].apply(lambda s: s.endswith('C'))
+    df['channel'] = df['condition'].apply(lambda s: s.split('_')[1])
+    df['treatment'] = df['condition'].apply(lambda s: s.split('_')[2])
+    df['is_temperature'] = df['treatment'].apply(lambda s: s.endswith('C'))
 
     df.to_csv(mapfile)
 
@@ -58,6 +85,9 @@ def parse_fluorfiles_from_mapfile(mapfile):
 
     return fluorfile, seriesfile
 
-fill_sample_sheet(r'config/nnnlib2_map.csv')
+#fill_sample_sheet(r'config/nnnlib2b_map.csv')
 #print(parse_mapfile(r'../config/test.map'))
 #print(parse_fluorfiles_from_mapfile(r'../config/test.map'))
+#datadir = r'/scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/'
+#fluor_names = get_fluor_names_from_mapfile(r'config/nnnlib2b_map.csv', fluordir=datadir+'fluor/', tifdir = datadir+'images/')
+#print(fluor_names)

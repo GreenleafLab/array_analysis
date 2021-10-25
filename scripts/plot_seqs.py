@@ -47,5 +47,5 @@ def plot_fiducial_all_tiles(CPseq_names, fig_names):
         plot_fiducial_in_tile(seqfile, figfile)
 
 
-print('\nHere we are', snakemake.input[0])
-plot_fiducial_all_tiles(snakemake.input[0], snakemake.output[0])
+print('\nHere we are', snakemake.input)
+plot_fiducial_all_tiles(snakemake.input, snakemake.output)
