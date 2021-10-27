@@ -23,10 +23,47 @@ def get_fluor_names_from_mapfile(mapfile, tifdir, fluordir):
         except:
             print("\nCannot find tif file for %s" % condition)
             print(os.listdir(tif_condition_dir))
-        
 
         fluor_names.append(os.path.join(fluordir, condition, tif_fn.strip('.tif') + '.CPfluor'))
+
     return fluor_names
+
+def write_old_mapfile_for_processData(fluordir, mapfile, outfile):
+    """
+    Write a mapfile in the old format to be consistent with the requirement of `processData.py`
+    Args:
+        fluordir - str, absolute directory for CPfluor dirs, e.g. /.../data/fluor/
+        mapfile - str
+            a csv file with the column 'condition'
+        outfile - str, name of the temporary output file
+    """
+    df = pd.read_csv(mapfile)
+    conditions = df['condition'].tolist()
+    
+    lines = [fluordir, '.'] + conditions
+    lines = [l + '\n' for l in lines]
+    print(lines)
+    
+    with open(outfile, 'w+') as fh:
+        fh.writelines(lines)
+
+    print('Wrote to old style mapfile %s' % outfile)
+
+def write_old_mapfile_from_fluordir(fluordir, outfile):
+    """
+    Write an old-fashioned mapfile with all the directories (conditions) in a clean fluordir.
+    Args:
+        fluordir - str
+        outfile - str
+    """
+    conditions = os.listdir(fluordir)
+    lines = [fluordir, '.'] + conditions
+    lines = [l + '\n' for l in lines]
+    
+    with open(outfile, 'w+') as fh:
+        fh.writelines(lines)
+    
+    print('Wrote to %s' % outfile)
 
 def fill_sample_sheet(mapfile):
     """

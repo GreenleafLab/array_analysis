@@ -15,15 +15,16 @@ TILES = ['tile%03d'%i for i in range(1,19)]
 TILES_NO_ZERO_PAD = ['tile%d'%i for i in range(1,19)]
 
 fluor_files = get_fluor_names_from_mapfile(config["mapfile"], config["tifdir"], config["fluordir"])
-#print(fluor_files)
+
 #wildcard_constraints:
 
 # --- Define Required Output --- #
 
 rule all:
     input: 
-        expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES),
-        fluor_files
+        config["seriesdir"]
+        #expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES),
+        #fluor_files
         #datadir + "fluor/Green16_25/NNNlib2b_DNA_tile1_green_600ms_2011.10.22-16.51.13.953.CPfluor"
         #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)
 
@@ -160,19 +161,30 @@ rule quantify_images:
         """
 
 
-"""
-rule integrate_signal:
+## combine_signal: Integrate and combine CPfluor files of different conditions into a single CPseries file per tile
+rule combine_signal:
     input:
-        expand(datadir + "fluor/{round}/{tile}.CPfluor", round=config['rounds'], tile=TILES)
+        fluor_files
     output:
-        datadir + "signal/CPseries.h5"
+        directory(config["seriesdir"])
     params:
-        fluordir = datadir + 'fluor/'
-        signaldir = datadir + 'signal/'
+        fluordir = config["fluordir"],
+        libdata = config["libdata"],
+        oldmapfile = datadir + 'tmp/' + config["experimentName"] + '.map',
+        cluster_memory = "80G",
+        cluster_time = "10:00:00",
+        num_cores = "6"
+    threads:
+        6
+    conda:
+        "envs/py36.yml"
     shell:
-        "scripts/array_tool/bin_py3/processData.py -mf {config[mapfile]} -od {params.signaldir}"
+        """
+        python scripts/write_old_mapfile.py {params.fluordir} {config[mapfile]} {params.oldmapfile}
+        python scripts/array_tools/bin_py3/processData.py -mf {params.oldmapfile} -od {output} --appendLibData {params.libdata} --num_cores {params.num_cores}
+        """
 
-
+"""
 
 rule normalize:
     input:
