@@ -1,6 +1,57 @@
 import os
 import pandas as pd
 
+def get_series_tile_filenames(seriesdir):
+    """
+    Returns:
+        tile_names - List[str]
+    """
+    tile_names = []
+    return tile_names
+
+
+def write_to_hdf5(experiment_nm, series_tile=[], h5nm=None, clean=True):
+    """
+    Args:
+        experiment_nm - str, e.g. 'NNNlib2b_DNA'
+        series_tile - List[str], list of CPseries file names
+        h5nm - str, output file name
+        clean - bool, whether to drop all nan and duplicate clusters
+    """
+    if h5nm is None:
+        if not clean:
+            h5nm = experiment_nm + '.h5'
+        else:
+            h5nm = experiment_nm + '_clean.h5'
+        
+    with pd.HDFStore(h5nm) as h5:
+        for i in range(1,19):
+            print('Reading tile %03d' % i)
+            tile = pd.read_csv(series_tile[i])
+            
+            if clean:
+                # drop clusters that only have NaNs
+                # drop non-unique clusters
+                tile.dropna(how='all', subset=conditions, inplace=True)
+                tile.drop_duplicates(subset='clusterID', keep=False, ignore_index=True, inplace=True)
+            
+            if i == 1:
+                h5.put('signal', tile, format='table', data_columns=True)
+            else:
+                h5.append('signal', tile, format='table', data_columns=True)
+                
+            print('Wrote tile %03d\n' % i)
+                
+    print('Wrote to hdf5 file %s' % h5nm)
+
+
+def convert_hdf5_to_pickle(hdf5_file, pickle_file, drop_duplicate=True):
+
+    all_df = pd.read_hdf(hdf5_file, 'signal', mode='r+')
+    if drop_duplicate:
+        all_df.drop_duplicates(subset='clusterID', keep=False, ignore_index=True, inplace=True)
+    all_df.to_pickle(pickle_file)
+
 
 def get_fluor_names_from_mapfile(mapfile, tifdir, fluordir):
     """

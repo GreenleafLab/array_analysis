@@ -1,0 +1,44 @@
+# === Experiment-dependent configurations === #
+experimentName:
+    NNNlib2b
+datadir:
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/
+fastq:
+    read1:
+        /oak/stanford/groups/wjg/kyx/data/NNNlib2b_processing_20211111/NNNlib2b_S1_L001_R1_001.fastq
+    read2:
+        /oak/stanford/groups/wjg/kyx/data/NNNlib2b_processing_20211111/NNNlib2b_S1_L001_R2_001.fastq
+sequencingResult:
+    # csv file holding sequencing data aligned to the library
+    # either output of `align_lib2b.sh` or generated within the workflow
+    # recommended location: {datadir}/aligned/
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/aligned/ConsensusReads_20211114_exact.CPseq
+referenceLibrary:
+    # RefSeqs of the library design for alignment
+    # should have a column named 'RefSeq'
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/reference/NNNlib2b_RefSeqs.csv
+tifdir:
+    # directory holding all tif images, with a trailing slash
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/images_20211022/
+fluordir:
+    # output directory for CPfluor files, with a trailing slash
+    # recommemded: {datadir}/fluor/
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/fluor/
+seriesdir:
+    # output directory for CPseries files, with a trailing slash
+    # recommended: {datadir}/series/
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series/
+mapfile:
+    # a csv file with column `condition`
+    config/nnnlib2b_map.csv
+FIDfilter:
+    data/reference/FID.CPfilter
+LibRegionFilter:
+    data/reference/LibRegion.CPfilter
+# ====== Environment Configurations =====
+FLASHdir:
+    /home/groups/wjg/kyx
+
+
+
+

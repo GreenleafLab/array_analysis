@@ -2,7 +2,7 @@ import os
 from scripts.util import *
 
 ####### SELECT CONFIG FILE HERE #######
-configfile: "config/config_NNNlib2b_Oct6.yaml"
+configfile: "config/config_NNNlib2b_Nov11.yaml"
 #######################################
 
 # --- Define Global Variables --- #
@@ -22,7 +22,8 @@ fluor_files = get_fluor_names_from_mapfile(config["mapfile"], config["tifdir"], 
 
 rule all:
     input: 
-        config["seriesdir"]
+        config["sequencingResult"]
+        #config["seriesdir"]
         #expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES),
         #fluor_files
         #datadir + "fluor/Green16_25/NNNlib2b_DNA_tile1_green_600ms_2011.10.22-16.51.13.953.CPfluor"
@@ -31,6 +32,55 @@ rule all:
 #STRSTAMP, TILES = glob_wildcards(datadir + "tiles/{strstamp}_ALL_{tile}_Bottom.CPseq")
 
 # --- Rules --- #
+
+## run_FLASH: align paired ends with FLASH
+rule run_FLASH:
+    input:
+        r1 = config['fastq']['read1'],
+        r2 = config['fastq']['read2']
+    output:
+        datadir + "FLASH_output/out.extendedFrags.fastq"
+    params:
+        outdir = datadir + "FLASH_output"
+    threads:
+        1
+    shell:
+        """
+        cd {params[outdir]}
+        {config[FLASHdir]}/FLASH-1.2.11/flash {input.r1} {input.r2}
+        """    
+
+rule convert_FLASH_to_CPseq:
+    input:
+        datadir + "FLASH_output/out.extendedFrags.fastq"
+    output:
+        datadir + "aligned/ConsensusPairedReads.CPseq"
+    threads:
+        1
+    conda:
+        "envs/align.yml"
+    shell:
+        "python scripts/convert_flash_output_to_CPseq.py {input} {output}"
+
+
+rule align_consensus_read_to_library:
+    input:
+        reads = datadir + "aligned/ConsensusPairedReads.CPseq",
+        reference = config["referenceLibrary"]
+    output:
+        config["sequencingResult"]
+    threads:
+        6
+    params:
+        cluster_memory = "40G",
+        cluster_time = "40:00:00"    
+    conda:
+        "envs/align.yml"
+    shell:
+        """
+        python scripts/matchConsensusReadsToLibrary.py {input.reads} --library {input.reference} -o {output} --exact
+        """
+
 
 rule merge_fastqs_to_CPseq:
     input:
@@ -91,7 +141,8 @@ rule filter_tiles:
         module load matlab
         export MATLABPATH=/share/PI/wjg/lab/array_tools/CPscripts/:/share/PI/wjg/lab/array_tools/CPlibs/
         python scripts/array_tools/CPscripts/alignmentFilterMultiple.py -rd {params.tiledir} -f {config[FIDfilter]} -od {params.filteredtiledir} -gv /share/PI/wjg/lab/array_tools -n 18 
-        """
+ 
+       """
 rule filter_tiles_libregion:
     input:
         expand(datadir + "tiles/ALL_{tile}_Bottom.CPseq", tile=TILES),
@@ -129,6 +180,7 @@ rule plot_fiducials:
     script:
         "scripts/plot_seqs.py"
 
+'''
 ## quantify_images: quantify intensities in tif and write to CPfluor
 ## snakemake checks one tile per condition as input/output and submit one job per condition
 rule quantify_images:
@@ -159,18 +211,34 @@ rule quantify_images:
         export MATLABPATH=scripts/array_tools/CPscripts:scripts/array_tools/CPlibs
         python scripts/array_tools/CPscripts/quantifyTilesDownstream.py -id {params.image_dir} -ftd {params.seq_dir} -fd {params.fluor_dir} -rod {params.roff_dir} -n {params.num_cores} -rs {params.reg_subset} -sf {params.data_scaling} -gv scripts/array_tools/
         """
+'''
+## write_old_mapfile: convert and prepare mapfile for the combine_signal step
+rule write_old_mapfile:
+    input:
+        config['mapfile']
+    output:
+        oldmapfile = datadir + 'tmp/' + config["experimentName"] + '.map'
+    params:
+        fluordir = config["fluordir"],
+        cluster_memory = "500M",
+        cluster_time = "0:15:00"
+    threads:
+        1
+    conda:
+        "envs/py36.yml"
+    shell:
+        "python scripts/write_old_mapfile.py {params.fluordir} {config[mapfile]} {output.oldmapfile}"
 
 
 ## combine_signal: Integrate and combine CPfluor files of different conditions into a single CPseries file per tile
 rule combine_signal:
     input:
-        fluor_files
+        fluorfiles = fluor_files,
+        oldmapfile = datadir + 'tmp/' + config["experimentName"] + '.map',
+        libdata = config["sequencingResult"]
     output:
         directory(config["seriesdir"])
     params:
-        fluordir = config["fluordir"],
-        libdata = config["libdata"],
-        oldmapfile = datadir + 'tmp/' + config["experimentName"] + '.map',
         cluster_memory = "80G",
         cluster_time = "10:00:00",
         num_cores = "6"
@@ -180,12 +248,16 @@ rule combine_signal:
         "envs/py36.yml"
     shell:
         """
-        python scripts/write_old_mapfile.py {params.fluordir} {config[mapfile]} {params.oldmapfile}
-        python scripts/array_tools/bin_py3/processData.py -mf {params.oldmapfile} -od {output} --appendLibData {params.libdata} --num_cores {params.num_cores}
+        python scripts/array_tools/bin_py3/processData.py -mf {input.oldmapfile} -od {output} --appendLibData {input.libdata} --num_cores {params.num_cores}
         """
 
-"""
+## combine_tiles: combine the per tile CPseq files from rule `combine_signal` and write to a single hdf5 and/or pickle file
+rule combine_tiles:
+    input:
+        [(config["seriesdir"] + tile_file) for tile_file in os.listdir(config["seriesdir"])]
 
+
+"""
 rule normalize:
     input:
         signal=""
