@@ -12,7 +12,7 @@ sequencingResult:
     # csv file holding sequencing data aligned to the library
     # either output of `align_lib2b.sh` or generated within the workflow
     # recommended location: {datadir}/aligned/
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/aligned/ConsensusReads_20211114_exact.CPseq
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/aligned/ConsensusReads_20211115_exact.CPseq
 referenceLibrary:
     # RefSeqs of the library design for alignment
     # should have a column named 'RefSeq'

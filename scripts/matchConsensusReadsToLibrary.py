@@ -12,10 +12,10 @@ pandarallel.initialize(progress_bar=True)
 # gapExtension1 = 0
 # gapPenalty2 = -1
 # gapExtension2 = 0
-scoringMatrix = "NUC.4.4"
+# scoringMatrix = "data/reference/NUC.4.4"
 
 def getScorePvalue(nwScore, m, n, k=0.0097, l=0.5735, nwScoreScale=0.2773):
-    """Ge pvalue of extreme value distribution which model's likelihood of achieveng a more extreme
+    """Get pvalue of extreme value distribution which model's likelihood of achieveng a more extreme
     alignment score for two sequences of length m and n. K and l are empirically determined.
     nwScoreScale is a factor applied to scores of NUC4.4 matrices (from MATLAB nwalign)"""
     u = np.log(k*m*n)/l
@@ -26,7 +26,7 @@ def calcMinQScore(libRegion):
     q_scores = [ord(x)-33 for x in libRegion]
     return np.min(q_scores)
 
-def getAlignment(seq1_in, seq2_in, gapPenalty, gapExtension,scoringMatrix="NUC.4.4"):
+def getAlignment(seq1_in, seq2_in, gapPenalty, gapExtension):
     seq1_out, seq2_out = nw.global_align(seq1_in, seq2_in, gap_open=gapPenalty, gap_extend=gapExtension, matrix=scoringMatrix)
     score = nw.score_alignment(seq1_out, seq2_out, gap_open=gapPenalty,  gap_extend=gapExtension, matrix=scoringMatrix)
     pvalue = getScorePvalue(score, len(seq1_in), len(seq2_in))
@@ -41,7 +41,6 @@ def get_hairpin(row, fiveprime_region ='GCTGTTGAAGGCTCGCGATGCACACGCTCTGGTACAAGGA
 
     Input:
     row of dataframe containing fields for `sequence` and `phred`
-
     Output:
     libregion: detected region between two flanking regions (str)
     phred_libregion: phred of detected region
@@ -96,6 +95,7 @@ def get_hairpin(row, fiveprime_region ='GCTGTTGAAGGCTCGCGATGCACACGCTCTGGTACAAGGA
     else:
         return np.nan, np.nan, np.nan
     
+
 def getLibraryRef(ex_seq, sort_lib_seqs, beam=100, second_try = False, exact=False,
                   gapPenalty1 = -1, gapExtension1 = -1, pValueCutoff = 1e-6, debug=False):
 
@@ -150,11 +150,15 @@ if __name__=='__main__':
     parser.add_argument("--OligoPValue", action='store', default=1e-3, help='P-value cutoff for aligning reads to fluor and quench oligo.')
     parser.add_argument("--LibPValue", action='store', default=1e-6, help='P-value cutoff for aligning libregions to library.')
     parser.add_argument('-o', action='store',help='name of output CPseq')
+    parser.add_argument('--scoringMatrix', action='store', default='NUC.4.4')
 
     args = parser.parse_args()
 
     if args.o is None:
         args.o = 'annotated_output.csv'
+    global scoringMatrix
+    scoringMatrix = args.scoringMatrix
+    print('Using scoring matrix %s' % scoringMatrix)
 
     library = pd.read_csv(args.library)
     #clean RefSeq column

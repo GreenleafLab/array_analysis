@@ -14,7 +14,9 @@ expdir = os.path.normpath(datadir + '/../') + '/'
 TILES = ['tile%03d'%i for i in range(1,19)]
 TILES_NO_ZERO_PAD = ['tile%d'%i for i in range(1,19)]
 
-fluor_files = get_fluor_names_from_mapfile(config["mapfile"], config["tifdir"], config["fluordir"])
+# == Comment this out after sequencing but before array experiment ==
+fluor_files = []
+#fluor_files = get_fluor_names_from_mapfile(config["mapfile"], config["tifdir"], config["fluordir"])
 
 #wildcard_constraints:
 
@@ -22,12 +24,13 @@ fluor_files = get_fluor_names_from_mapfile(config["mapfile"], config["tifdir"], 
 
 rule all:
     input: 
-        config["sequencingResult"]
-        #config["seriesdir"]
-        #expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES),
+        config["sequencingResult"]#, #== Align sequencing data ==
+        #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES) #== Plot fiducials ==
+        #expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES), #== Filtered libregions ==
         #fluor_files
-        #datadir + "fluor/Green16_25/NNNlib2b_DNA_tile1_green_600ms_2011.10.22-16.51.13.953.CPfluor"
-        #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)
+        #config["seriesdir"]
+        #datadir + "fluor/Green16_25/NNNlib2b_DNA_tile1_green_600ms_2011.10.22-16.51.13.953.CPfluor" #== Example image quantification ==
+
 
 #STRSTAMP, TILES = glob_wildcards(datadir + "tiles/{strstamp}_ALL_{tile}_Bottom.CPseq")
 
@@ -54,7 +57,7 @@ rule convert_FLASH_to_CPseq:
     input:
         datadir + "FLASH_output/out.extendedFrags.fastq"
     output:
-        datadir + "aligned/ConsensusPairedReads.CPseq"
+        datadir + "paired_reads/ConsensusPairedReads.CPseq"
     threads:
         1
     conda:
@@ -63,22 +66,24 @@ rule convert_FLASH_to_CPseq:
         "python scripts/convert_flash_output_to_CPseq.py {input} {output}"
 
 
+
 rule align_consensus_read_to_library:
     input:
-        reads = datadir + "aligned/ConsensusPairedReads.CPseq",
-        reference = config["referenceLibrary"]
+        reads = datadir + "paired_reads/ConsensusPairedReads.CPseq",
+        reference = config["referenceLibrary"],
+        scoring_matrix = os.path.join(os.getcwd(), "data/reference/NUC.4.4") # need this to check existence of the matrix file
     output:
         config["sequencingResult"]
     threads:
         6
     params:
         cluster_memory = "40G",
-        cluster_time = "40:00:00"    
+        cluster_time = "24:00:00"    
     conda:
         "envs/align.yml"
     shell:
         """
-        python scripts/matchConsensusReadsToLibrary.py {input.reads} --library {input.reference} -o {output} --exact
+        python scripts/matchConsensusReadsToLibrary.py {input.reads} --library {input.reference} -o {output} --exact --scoringMatrix {input.scoring_matrix}
         """
 
 
@@ -180,7 +185,7 @@ rule plot_fiducials:
     script:
         "scripts/plot_seqs.py"
 
-'''
+
 ## quantify_images: quantify intensities in tif and write to CPfluor
 ## snakemake checks one tile per condition as input/output and submit one job per condition
 rule quantify_images:
@@ -211,7 +216,8 @@ rule quantify_images:
         export MATLABPATH=scripts/array_tools/CPscripts:scripts/array_tools/CPlibs
         python scripts/array_tools/CPscripts/quantifyTilesDownstream.py -id {params.image_dir} -ftd {params.seq_dir} -fd {params.fluor_dir} -rod {params.roff_dir} -n {params.num_cores} -rs {params.reg_subset} -sf {params.data_scaling} -gv scripts/array_tools/
         """
-'''
+
+
 ## write_old_mapfile: convert and prepare mapfile for the combine_signal step
 rule write_old_mapfile:
     input:
@@ -250,18 +256,3 @@ rule combine_signal:
         """
         python scripts/array_tools/bin_py3/processData.py -mf {input.oldmapfile} -od {output} --appendLibData {input.libdata} --num_cores {params.num_cores}
         """
-
-## combine_tiles: combine the per tile CPseq files from rule `combine_signal` and write to a single hdf5 and/or pickle file
-rule combine_tiles:
-    input:
-        [(config["seriesdir"] + tile_file) for tile_file in os.listdir(config["seriesdir"])]
-
-
-"""
-rule normalize:
-    input:
-        signal=""
-        re=""
-    shell:
-        "python -m array_fitting_tools/bin/normalizeSeries -b {input.signal}.CPseries.gz -a {input.ref}.CPseries.gz"
-"""
