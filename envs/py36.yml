@@ -1,0 +1,10 @@
+name: py36
+dependencies:
+  - python=3.6
+  - numpy
+  - pandas
+  - matplotlib
+  - scipy
+  - seaborn
+  - joblib
+  - biopython

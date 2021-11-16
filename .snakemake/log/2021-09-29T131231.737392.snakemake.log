@@ -1,0 +1,24 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+CPfluor2CPseries        1              1              1
+total                   1              1              1
+
+Select jobs to execute...
+
+[Wed Sep 29 13:12:33 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile18_green_600ms_2011.07.27-13.44.52.953.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile18_green_600ms_2011.07.27-13.44.52.953.CPseries
+    jobid: 0
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile18_green_600ms_2011.07.27-13.44.52.953
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:12:41 2021]
+Finished job 0.
+1 of 1 steps (100%) done
+Complete log: /home/users/kyx/array_analysis/.snakemake/log/2021-09-29T131231.737392.snakemake.log

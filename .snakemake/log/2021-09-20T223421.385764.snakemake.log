@@ -1,0 +1,32 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+CPfluor2CPseries        1              1              1
+total                   1              1              1
+
+Select jobs to execute...
+
+[Mon Sep 20 22:34:22 2021]
+rule CPfluor2CPseries:
+    input: data/CPfluor/test.CPfluor
+    output: data/CPseries/test.CPseries
+    jobid: 0
+    resources: tmpdir=/var/folders/bz/8gjs6m457yq0t4s2wdw3xh9h0000gn/T
+
+[Mon Sep 20 22:34:28 2021]
+Error in rule CPfluor2CPseries:
+    jobid: 0
+    output: data/CPseries/test.CPseries
+
+RuleException:
+CalledProcessError in line 15 of /Users/yuxi/workspace/array_analysis/Snakefile:
+Command 'set -euo pipefail;  /Users/yuxi/opt/anaconda3/envs/snakemake/bin/python3.9 /Users/yuxi/workspace/array_analysis/.snakemake/scripts/tmp2ox9dwbw.CPfluor2CPseries.py' returned non-zero exit status 1.
+  File "/Users/yuxi/workspace/array_analysis/Snakefile", line 15, in __rule_CPfluor2CPseries
+  File "/Users/yuxi/opt/anaconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /Users/yuxi/workspace/array_analysis/.snakemake/log/2021-09-20T223421.385764.snakemake.log

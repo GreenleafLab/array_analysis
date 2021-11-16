@@ -1,0 +1,478 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+CPfluor2CPseries       35              1              1
+all                     1              1              1
+total                  36              1              1
+
+Select jobs to execute...
+
+[Wed Sep 29 13:12:58 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile9_green_600ms_2011.07.27-13.43.35.109.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile9_green_600ms_2011.07.27-13.43.35.109.CPseries
+    jobid: 8
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile9_green_600ms_2011.07.27-13.43.35.109
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:13:06 2021]
+Finished job 8.
+1 of 36 steps (3%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:13:06 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile12_green_600ms_2011.07.27-13.44.00.359.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile12_green_600ms_2011.07.27-13.44.00.359.CPseries
+    jobid: 1
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile12_green_600ms_2011.07.27-13.44.00.359
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:13:14 2021]
+Finished job 1.
+2 of 36 steps (6%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:13:14 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile5_green_600ms_2011.07.27-13.42.59.796.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile5_green_600ms_2011.07.27-13.42.59.796.CPseries
+    jobid: 15
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile5_green_600ms_2011.07.27-13.42.59.796
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:13:22 2021]
+Finished job 15.
+3 of 36 steps (8%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:13:22 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile4_red_600ms_2011.07.27-13.42.54.078.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile4_red_600ms_2011.07.27-13.42.54.078.CPseries
+    jobid: 33
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile4_red_600ms_2011.07.27-13.42.54.078
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:13:30 2021]
+Finished job 33.
+4 of 36 steps (11%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:13:30 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile1_green_600ms_2011.07.27-13.42.24.171.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile1_green_600ms_2011.07.27-13.42.24.171.CPseries
+    jobid: 18
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile1_green_600ms_2011.07.27-13.42.24.171
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:13:37 2021]
+Finished job 18.
+5 of 36 steps (14%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:13:38 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile14_green_600ms_2011.07.27-13.44.18.703.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile14_green_600ms_2011.07.27-13.44.18.703.CPseries
+    jobid: 10
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile14_green_600ms_2011.07.27-13.44.18.703
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:13:47 2021]
+Finished job 10.
+6 of 36 steps (17%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:13:47 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile14_red_600ms_2011.07.27-13.44.22.015.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile14_red_600ms_2011.07.27-13.44.22.015.CPseries
+    jobid: 25
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile14_red_600ms_2011.07.27-13.44.22.015
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:13:54 2021]
+Finished job 25.
+7 of 36 steps (19%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:13:55 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile10_green_600ms_2011.07.27-13.43.43.453.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile10_green_600ms_2011.07.27-13.43.43.453.CPseries
+    jobid: 4
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile10_green_600ms_2011.07.27-13.43.43.453
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:14:02 2021]
+Finished job 4.
+8 of 36 steps (22%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:14:03 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile3_red_600ms_2011.07.27-13.42.45.250.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile3_red_600ms_2011.07.27-13.42.45.250.CPseries
+    jobid: 19
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile3_red_600ms_2011.07.27-13.42.45.250
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:14:10 2021]
+Finished job 19.
+9 of 36 steps (25%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:14:10 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile17_red_600ms_2011.07.27-13.44.47.296.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile17_red_600ms_2011.07.27-13.44.47.296.CPseries
+    jobid: 34
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile17_red_600ms_2011.07.27-13.44.47.296
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:14:18 2021]
+Finished job 34.
+10 of 36 steps (28%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:14:19 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile6_green_600ms_2011.07.27-13.43.08.328.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile6_green_600ms_2011.07.27-13.43.08.328.CPseries
+    jobid: 11
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile6_green_600ms_2011.07.27-13.43.08.328
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:14:26 2021]
+Finished job 11.
+11 of 36 steps (31%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:14:26 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile2_red_600ms_2011.07.27-13.42.36.468.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile2_red_600ms_2011.07.27-13.42.36.468.CPseries
+    jobid: 26
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile2_red_600ms_2011.07.27-13.42.36.468
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:14:34 2021]
+Finished job 26.
+12 of 36 steps (33%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:14:34 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile2_green_600ms_2011.07.27-13.42.33.187.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile2_green_600ms_2011.07.27-13.42.33.187.CPseries
+    jobid: 5
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile2_green_600ms_2011.07.27-13.42.33.187
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:14:42 2021]
+Finished job 5.
+13 of 36 steps (36%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:14:42 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile9_red_600ms_2011.07.27-13.43.38.296.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile9_red_600ms_2011.07.27-13.43.38.296.CPseries
+    jobid: 22
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile9_red_600ms_2011.07.27-13.43.38.296
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:14:49 2021]
+Finished job 22.
+14 of 36 steps (39%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:14:49 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile18_red_600ms_2011.07.27-13.44.56.203.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile18_red_600ms_2011.07.27-13.44.56.203.CPseries
+    jobid: 35
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile18_red_600ms_2011.07.27-13.44.56.203
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:14:57 2021]
+Finished job 35.
+15 of 36 steps (42%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:14:57 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile1_red_600ms_2011.07.27-13.42.27.625.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile1_red_600ms_2011.07.27-13.42.27.625.CPseries
+    jobid: 27
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile1_red_600ms_2011.07.27-13.42.27.625
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:15:05 2021]
+Finished job 27.
+16 of 36 steps (44%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:15:05 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile4_green_600ms_2011.07.27-13.42.50.703.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile4_green_600ms_2011.07.27-13.42.50.703.CPseries
+    jobid: 6
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile4_green_600ms_2011.07.27-13.42.50.703
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:15:13 2021]
+Finished job 6.
+17 of 36 steps (47%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:15:14 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile16_green_600ms_2011.07.27-13.44.36.156.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile16_green_600ms_2011.07.27-13.44.36.156.CPseries
+    jobid: 7
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile16_green_600ms_2011.07.27-13.44.36.156
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:15:23 2021]
+Finished job 7.
+18 of 36 steps (50%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:15:24 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile7_green_600ms_2011.07.27-13.43.17.421.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile7_green_600ms_2011.07.27-13.43.17.421.CPseries
+    jobid: 14
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile7_green_600ms_2011.07.27-13.43.17.421
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:15:31 2021]
+Finished job 14.
+19 of 36 steps (53%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:15:32 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile11_red_600ms_2011.07.27-13.43.55.046.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile11_red_600ms_2011.07.27-13.43.55.046.CPseries
+    jobid: 21
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile11_red_600ms_2011.07.27-13.43.55.046
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:15:39 2021]
+Finished job 21.
+20 of 36 steps (56%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:15:39 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile5_red_600ms_2011.07.27-13.43.03.125.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile5_red_600ms_2011.07.27-13.43.03.125.CPseries
+    jobid: 36
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile5_red_600ms_2011.07.27-13.43.03.125
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:15:47 2021]
+Finished job 36.
+21 of 36 steps (58%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:15:47 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile10_red_600ms_2011.07.27-13.43.46.671.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile10_red_600ms_2011.07.27-13.43.46.671.CPseries
+    jobid: 23
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile10_red_600ms_2011.07.27-13.43.46.671
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:15:54 2021]
+Finished job 23.
+22 of 36 steps (61%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:15:55 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile7_red_600ms_2011.07.27-13.43.20.703.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile7_red_600ms_2011.07.27-13.43.20.703.CPseries
+    jobid: 30
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile7_red_600ms_2011.07.27-13.43.20.703
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:16:02 2021]
+Finished job 30.
+23 of 36 steps (64%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:16:03 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile15_green_600ms_2011.07.27-13.44.27.640.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile15_green_600ms_2011.07.27-13.44.27.640.CPseries
+    jobid: 2
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile15_green_600ms_2011.07.27-13.44.27.640
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:16:11 2021]
+Finished job 2.
+24 of 36 steps (67%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:16:11 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile13_green_600ms_2011.07.27-13.44.09.718.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile13_green_600ms_2011.07.27-13.44.09.718.CPseries
+    jobid: 17
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile13_green_600ms_2011.07.27-13.44.09.718
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:16:18 2021]
+Finished job 17.
+25 of 36 steps (69%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:16:19 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile15_red_600ms_2011.07.27-13.44.31.078.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile15_red_600ms_2011.07.27-13.44.31.078.CPseries
+    jobid: 32
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile15_red_600ms_2011.07.27-13.44.31.078
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:16:26 2021]
+Finished job 32.
+26 of 36 steps (72%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:16:26 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile11_green_600ms_2011.07.27-13.43.52.359.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile11_green_600ms_2011.07.27-13.43.52.359.CPseries
+    jobid: 13
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile11_green_600ms_2011.07.27-13.43.52.359
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:16:34 2021]
+Finished job 13.
+27 of 36 steps (75%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:16:34 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile8_red_600ms_2011.07.27-13.43.29.218.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile8_red_600ms_2011.07.27-13.43.29.218.CPseries
+    jobid: 28
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile8_red_600ms_2011.07.27-13.43.29.218
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:16:42 2021]
+Finished job 28.
+28 of 36 steps (78%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:16:42 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile16_red_600ms_2011.07.27-13.44.39.109.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile16_red_600ms_2011.07.27-13.44.39.109.CPseries
+    jobid: 20
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile16_red_600ms_2011.07.27-13.44.39.109
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:16:50 2021]
+Finished job 20.
+29 of 36 steps (81%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:16:50 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile12_red_600ms_2011.07.27-13.44.04.250.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile12_red_600ms_2011.07.27-13.44.04.250.CPseries
+    jobid: 31
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile12_red_600ms_2011.07.27-13.44.04.250
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:16:58 2021]
+Finished job 31.
+30 of 36 steps (83%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:16:58 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile6_red_600ms_2011.07.27-13.43.11.796.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile6_red_600ms_2011.07.27-13.43.11.796.CPseries
+    jobid: 29
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile6_red_600ms_2011.07.27-13.43.11.796
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:17:06 2021]
+Finished job 29.
+31 of 36 steps (86%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:17:06 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile3_green_600ms_2011.07.27-13.42.41.656.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile3_green_600ms_2011.07.27-13.42.41.656.CPseries
+    jobid: 9
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile3_green_600ms_2011.07.27-13.42.41.656
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:17:13 2021]
+Finished job 9.
+32 of 36 steps (89%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:17:14 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile17_green_600ms_2011.07.27-13.44.44.109.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile17_green_600ms_2011.07.27-13.44.44.109.CPseries
+    jobid: 3
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile17_green_600ms_2011.07.27-13.44.44.109
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:17:21 2021]
+Finished job 3.
+33 of 36 steps (92%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:17:22 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Red_15C/NNNlib2_DNA_tile13_red_600ms_2011.07.27-13.44.13.046.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile13_red_600ms_2011.07.27-13.44.13.046.CPseries
+    jobid: 24
+    wildcards: basedir=/scratch/users/kyx, round=15_Red_15C, tile=NNNlib2_DNA_tile13_red_600ms_2011.07.27-13.44.13.046
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:17:29 2021]
+Finished job 24.
+34 of 36 steps (94%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:17:29 2021]
+rule CPfluor2CPseries:
+    input: /scratch/users/kyx/fluor_dir/15_Green_15C/NNNlib2_DNA_tile8_green_600ms_2011.07.27-13.43.25.828.CPfluor
+    output: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile8_green_600ms_2011.07.27-13.43.25.828.CPseries
+    jobid: 16
+    wildcards: basedir=/scratch/users/kyx, round=15_Green_15C, tile=NNNlib2_DNA_tile8_green_600ms_2011.07.27-13.43.25.828
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:17:36 2021]
+Finished job 16.
+35 of 36 steps (97%) done
+Select jobs to execute...
+
+[Wed Sep 29 13:17:37 2021]
+localrule all:
+    input: /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile12_green_600ms_2011.07.27-13.44.00.359.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile15_green_600ms_2011.07.27-13.44.27.640.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile17_green_600ms_2011.07.27-13.44.44.109.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile10_green_600ms_2011.07.27-13.43.43.453.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile2_green_600ms_2011.07.27-13.42.33.187.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile4_green_600ms_2011.07.27-13.42.50.703.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile16_green_600ms_2011.07.27-13.44.36.156.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile9_green_600ms_2011.07.27-13.43.35.109.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile3_green_600ms_2011.07.27-13.42.41.656.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile14_green_600ms_2011.07.27-13.44.18.703.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile6_green_600ms_2011.07.27-13.43.08.328.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile18_green_600ms_2011.07.27-13.44.52.953.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile11_green_600ms_2011.07.27-13.43.52.359.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile7_green_600ms_2011.07.27-13.43.17.421.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile5_green_600ms_2011.07.27-13.42.59.796.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile8_green_600ms_2011.07.27-13.43.25.828.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile13_green_600ms_2011.07.27-13.44.09.718.CPseries, /scratch/users/kyx/series_dir/15_Green_15C/NNNlib2_DNA_tile1_green_600ms_2011.07.27-13.42.24.171.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile3_red_600ms_2011.07.27-13.42.45.250.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile16_red_600ms_2011.07.27-13.44.39.109.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile11_red_600ms_2011.07.27-13.43.55.046.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile9_red_600ms_2011.07.27-13.43.38.296.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile10_red_600ms_2011.07.27-13.43.46.671.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile13_red_600ms_2011.07.27-13.44.13.046.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile14_red_600ms_2011.07.27-13.44.22.015.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile2_red_600ms_2011.07.27-13.42.36.468.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile1_red_600ms_2011.07.27-13.42.27.625.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile8_red_600ms_2011.07.27-13.43.29.218.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile6_red_600ms_2011.07.27-13.43.11.796.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile7_red_600ms_2011.07.27-13.43.20.703.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile12_red_600ms_2011.07.27-13.44.04.250.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile15_red_600ms_2011.07.27-13.44.31.078.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile4_red_600ms_2011.07.27-13.42.54.078.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile17_red_600ms_2011.07.27-13.44.47.296.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile18_red_600ms_2011.07.27-13.44.56.203.CPseries, /scratch/users/kyx/series_dir/15_Red_15C/NNNlib2_DNA_tile5_red_600ms_2011.07.27-13.43.03.125.CPseries
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Wed Sep 29 13:17:37 2021]
+Finished job 0.
+36 of 36 steps (100%) done
+Complete log: /home/users/kyx/array_analysis/.snakemake/log/2021-09-29T131256.793611.snakemake.log

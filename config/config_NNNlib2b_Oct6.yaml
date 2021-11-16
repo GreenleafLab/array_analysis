@@ -1,0 +1,36 @@
+experimentName:
+    NNNlib2b_DNA
+datadir:
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/
+fastq:
+    read1:
+        /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/fastq/NNNlib2b_S1_L001_R1_001.fastq
+    read2:
+        /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/fastq/NNNlib2b_S1_L001_R2_001.fastq
+libdata:
+    # csv file holding sequencing data aligned to the library
+    # output of `align_lib2b.sh`
+    # recommended location: {datadir}/aligned/
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/aligned/ConsensusReads_20211012_exact.CPseq
+tifdir:
+    # directory holding all tif images, with a trailing slash
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/images_20211022/
+fluordir:
+    # output directory for CPfluor files, with a trailing slash
+    # recommemded: {datadir}/fluor/
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/fluor/
+seriesdir:
+    # output directory for CPseries files, with a trailing slash
+    # recommended: {datadir}/series/
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/series/
+mapfile:
+    # a csv file with column `condition`
+    config/nnnlib2b_map.csv
+FIDfilter:
+    data/reference/FID.CPfilter
+LibRegionFilter:
+    data/reference/LibRegion.CPfilter
+
+
+
+
