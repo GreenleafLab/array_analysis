@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-rule CPfluor2CPseries:
-    input:
-        {condition}.CPfluor
-        NNNlib2.map
-    output:
-        {condition}.CPseries.csv
-
-rule 
-=======
 import os
 from scripts.util import *
 
@@ -266,4 +256,3 @@ rule combine_signal:
         """
         python scripts/array_tools/bin_py3/processData.py -mf {input.oldmapfile} -od {output} --appendLibData {input.libdata} --num_cores {params.num_cores}
         """
->>>>>>> nnn
