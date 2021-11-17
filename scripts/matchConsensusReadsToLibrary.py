@@ -222,4 +222,4 @@ if __name__=='__main__':
     # remove libRegions that did not align to a ref seq
     df= df.loc[~df['RefSeq'].isna()]
 
-    df.to_csv(args.o + '.CPseq', sep='\t', index=False)
+    df.to_csv(args.o, sep='\t', index=False)
