@@ -1,4 +1,0 @@
-rule CPfluor2CPseries:
-    input:
-        {}.CPfluor
-        
