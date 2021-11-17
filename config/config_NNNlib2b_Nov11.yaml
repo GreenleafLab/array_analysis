@@ -1,6 +1,10 @@
 # === Experiment-dependent configurations === #
 experimentName:
     NNNlib2b
+processingType:
+    # either 'pre-array' or 'post-array'
+    # 'pre-array' for sequencing processing only
+    pre-array
 datadir:
     /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/
 fastq:
@@ -9,10 +13,10 @@ fastq:
     read2:
         /oak/stanford/groups/wjg/kyx/data/NNNlib2b_processing_20211111/NNNlib2b_S1_L001_R2_001.fastq
 sequencingResult:
-    # csv file holding sequencing data aligned to the library
+    # csv file (CPseq) holding sequencing data aligned to the library
     # either output of `align_lib2b.sh` or generated within the workflow
-    # recommended location: {datadir}/aligned/
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/aligned/ConsensusReads_20211115_exact.CPseq
+    # location: {datadir}/aligned/
+    ConsensusReads_20211115_exact.CPseq
 referenceLibrary:
     # RefSeqs of the library design for alignment
     # should have a column named 'RefSeq'

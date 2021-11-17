@@ -9,23 +9,32 @@ configfile: "config/config_NNNlib2b_Nov11.yaml"
 
 datadir = config['datadir']
 expdir = os.path.normpath(datadir + '/../') + '/'
+sequencingResult = datadir + 'aligned/' + config["sequencingResult"]
 
 # hardcoded tile numbers
 TILES = ['tile%03d'%i for i in range(1,19)]
 TILES_NO_ZERO_PAD = ['tile%d'%i for i in range(1,19)]
 
 # == Comment this out after sequencing but before array experiment ==
-fluor_files = []
-#fluor_files = get_fluor_names_from_mapfile(config["mapfile"], config["tifdir"], config["fluordir"])
+assert config["processingType"] in ['pre-array', 'post-array']
+if config["processingType"] == "pre-array":
+    fluor_files = []
+    requested_output = ["%s_STATS.csv" % sequencingResult.strip('.CPseq'),
+                        expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)]
+elif config["processingType"] == "post-array":
+    fluor_files = get_fluor_names_from_mapfile(config["mapfile"], config["tifdir"], config["fluordir"])
+    requested_output = [fluor_files, config["seriesdir"]]
 
 #wildcard_constraints:
 
 # --- Define Required Output --- #
 
 rule all:
-    input: 
-        config["sequencingResult"], #== Align sequencing data ==
-        expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES) #== Plot fiducials ==
+    input:
+        requested_output
+        #"%s_STATS.csv" % sequencingResult.strip('.CPseq'),
+        #config["sequencingResult"]#, #== Align sequencing data ==
+        #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES) #== Plot fiducials ==
         #expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES), #== Filtered libregions ==
         #fluor_files
         #config["seriesdir"]
@@ -73,7 +82,7 @@ rule align_consensus_read_to_library:
         reference = config["referenceLibrary"],
         scoring_matrix = os.path.join(os.getcwd(), "data/reference/NUC.4.4") # need this to check existence of the matrix file
     output:
-        config["sequencingResult"]
+        sequencingResult
     threads:
         6
     params:
@@ -85,6 +94,18 @@ rule align_consensus_read_to_library:
         """
         python scripts/matchConsensusReadsToLibrary.py {input.reads} --library {input.reference} -o {output} --exact --scoringMatrix {input.scoring_matrix}
         """
+
+rule get_stats:
+    input:
+        sequencingResult
+    output:
+        "%s_STATS.csv" % sequencingResult.strip('.CPseq')
+    threads:
+        1
+    conda:
+        "envs/align.yml"
+    shell:
+        "python scripts/get_stats.py {input} {output}"
 
 
 rule merge_fastqs_to_CPseq:
