@@ -41,9 +41,23 @@ rule all:
         #datadir + "fluor/Green16_25/NNNlib2b_DNA_tile1_green_600ms_2011.10.22-16.51.13.953.CPfluor" #== Example image quantification ==
 
 
-#STRSTAMP, TILES = glob_wildcards(datadir + "tiles/{strstamp}_ALL_{tile}_Bottom.CPseq")
-
 # --- Rules --- #
+
+## unzip_fastq: in case the fastq files were not unzipped
+rule unzip_fastq:
+    input:
+        r1 = config['fastq']['read1'] + ".gz",
+        r2 = config['fastq']['read2'] + ".gz"
+    output:
+        r1 = config['fastq']['read1'],
+        r2 = config['fastq']['read2']
+    threads:
+        1
+    params:
+        cluster_time = "02:00:00"
+    shell:
+        "gunzip {input.r1} {input.r2}"
+
 
 ## run_FLASH: align paired ends with FLASH
 rule run_FLASH:
@@ -86,13 +100,15 @@ rule align_consensus_read_to_library:
     threads:
         6
     params:
+        fiveprimeRegion = config["refSeqContext"]["fiveprime"],
+        threeprimeRegion = config["refSeqContext"]["threeprime"],
         cluster_memory = "90G",
         cluster_time = "24:00:00"    
     conda:
         "envs/align.yml"
     shell:
         """
-        python scripts/matchConsensusReadsToLibrary.py {input.reads} --library {input.reference} -o {output} --exact --scoringMatrix {input.scoring_matrix}
+        python scripts/matchConsensusReadsToLibrary.py --beam {config[alignBeam]} {input.reads} --library {input.reference} -o {output} --scoringMatrix {input.scoring_matrix} --fiveprimeRegion {params.fiveprimeRegion} --threeprimeRegion {params.threeprimeRegion}
         """
 
 rule get_stats:

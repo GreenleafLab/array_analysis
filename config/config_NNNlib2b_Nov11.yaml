@@ -21,6 +21,19 @@ referenceLibrary:
     # RefSeqs of the library design for alignment
     # should have a column named 'RefSeq'
     /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/reference/NNNlib2b_RefSeqs.csv
+refSeqContext:
+    # Context immediately surrounding the variable region in the library
+    # Used for alignment
+    fiveprime:
+        'GCTGTTGAAGGCTCGCGATGCACACGCTCTGGTACAAGGAA'
+    threeprime:
+        'AAGGCACTGGGCAATACGAGCTCAAGCCAGTCTCGCAGTCC'
+alignBeam:
+    # Number of similar library reference sequences to try for alignment
+    # if there is no exact match
+    # if set to 0 or 1, only allow exact match
+    100
+# --- Begin post-array config with imaging data ---
 tifdir:
     # directory holding all tif images, with a trailing slash
     /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/images_20211022/

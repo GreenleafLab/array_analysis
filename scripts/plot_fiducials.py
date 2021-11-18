@@ -1,3 +1,7 @@
+"""
+Test script for `plot_seqs.py`
+"""
+
 from plot_seqs import *
 import os
 

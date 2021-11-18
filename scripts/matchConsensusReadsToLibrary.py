@@ -33,72 +33,53 @@ def getAlignment(seq1_in, seq2_in, gapPenalty, gapExtension):
     return seq1_out, seq2_out, score, pvalue
 
 def get_hairpin(row, fiveprime_region ='GCTGTTGAAGGCTCGCGATGCACACGCTCTGGTACAAGGAA',
-                        threeprime_regions=['AAGGCACTGGGCAATACGAGCTCAAGCCAGTCTCGCAGTCC',
-                        'AAGGCGACTCCACTATAGTACCGTCGTCCGGTGGAGTCTGG'], debug=False,pValueCutoff=1e-3):
+                        threeprime_region='AAGGCACTGGGCAATACGAGCTCAAGCCAGTCTCGCAGTCC', 
+                        debug=False, pValueCutoff=1e-3):
 
     '''
     Align read to two flanking regions and return region in between them.
 
     Input:
-    row of dataframe containing fields for `sequence` and `phred`
+        row - row of dataframe containing fields for `sequence` and `phred`
+        fiveprime_region - str, 5' region containing Cy3 binding site and 2 linker 'A'
+        threeprime_region - str, either 2 alternatives (historical design, one with quench and one without)
+            or only 1 (current disign, quench binding site and extra 'A's). Put it in a list to keep consistant
     Output:
-    libregion: detected region between two flanking regions (str)
-    phred_libregion: phred of detected region
-    which_threeprime_ind: which threeprime region was aligned
+        libregion: detected region between two flanking regions (str)
+        phred_libregion: phred of detected region
 
-    If sequence fails to align: returns NaN's for all 3
+    If sequence fails to align: returns NaN's for all
     '''
 
     sequence=row['sequence']
     seq1a, seq1b, score1, pvalue1 = getAlignment(sequence, fiveprime_region, 0, 0)
 
-    # seq1a, seq1b = nw.global_align(sequence, fiveprime_region, gap_open=gapPenalty1, gap_extend=gapExtension1, matrix=scoringMatrix)
-    # score1 = nw.score_alignment(seq1a, seq1b, gap_open=gapPenalty1, gap_extend=gapExtension1, matrix=scoringMatrix)
-    # pvalue1 = getScorePvalue(score1, len(fiveprime_region), len(sequence))
-
     if pvalue1 < pValueCutoff:
 
-        # Test first threeprime_region, if pval not below cutoff, try next one
-        seq2a, seq2b, score2_0, pvalue2 = getAlignment(sequence, threeprime_regions[0],-1,0)
-        seq2a, seq2b, score2_1, pvalue2 = getAlignment(sequence, threeprime_regions[1],-1,0)
-
-        if score2_0 > score2_1:
-            which_threeprime_ind=0
-        else:
-            which_threeprime_ind = 1
-
-        seq2a, seq2b, score2, pvalue2 = getAlignment(sequence, threeprime_regions[which_threeprime_ind],-1,0)
-
-        # seq2a, seq2b = nw.global_align(sequence, threeprime_region[0],gap_open=gapPenalty2, gap_extend=gapExtension2, matrix=scoringMatrix)
-        # score2 = nw.score_alignment(seq2a, seq2b, gap_open=gapPenalty2, gap_extend=gapExtension2,  matrix=scoringMatrix)
-        # pvalue2 = getScorePvalue(score2, len(threeprime_region[0]), len(sequence))
+        seq2a, seq2b, score2, pvalue2 = getAlignment(sequence, threeprime_region, -1, 0)
 
         if pvalue2 < pValueCutoff:
             lib_start = seq1b.find('-')
-            lib_end = seq2b.find(threeprime_regions[which_threeprime_ind][0])
-            
-            if debug:
-                print(seq1a)
-                print(seq1b)
-                print(seq2a)
-                print(seq2b)
-                print('')
-                print(score1, pvalue1, score2, pvalue2)
+            lib_end = seq2b.find(threeprime_region[0])
 
             libregion = sequence[len(fiveprime_region):lib_end]
             phred_libregion = row['phred'][len(fiveprime_region):lib_end]
-        
-            return libregion, phred_libregion, which_threeprime_ind
-    
+
+            return libregion, phred_libregion
         else:
-            return np.nan, np.nan, np.nan
+            return np.nan, np.nan
+
     else:
-        return np.nan, np.nan, np.nan
+        return np.nan, np.nan
     
 
 def getLibraryRef(ex_seq, sort_lib_seqs, beam=100, second_try = False, exact=False,
                   gapPenalty1 = -1, gapExtension1 = -1, pValueCutoff = 1e-6, debug=False):
-
+    """
+    Returns:
+        RefSeq
+        pValue
+    """
     if ex_seq=='':
         return ''
     
@@ -150,7 +131,10 @@ if __name__=='__main__':
     parser.add_argument("--OligoPValue", action='store', default=1e-3, help='P-value cutoff for aligning reads to fluor and quench oligo.')
     parser.add_argument("--LibPValue", action='store', default=1e-6, help='P-value cutoff for aligning libregions to library.')
     parser.add_argument('-o', action='store',help='name of output CPseq')
-    parser.add_argument('--scoringMatrix', action='store', default='NUC.4.4')
+    parser.add_argument('--scoringMatrix', action='store', default='NUC.4.4', help='path to the scoring matrix file')
+    parser.add_argument('--fiveprimeRegion', action='store', default='GCTGTTGAAGGCTCGCGATGCACACGCTCTGGTACAAGGAA')
+    parser.add_argument('--threeprimeRegion', action='store', default='AAGGCACTGGGCAATACGAGCTCAAGCCAGTCTCGCAGTCC')
+    
 
     args = parser.parse_args()
 
@@ -159,6 +143,9 @@ if __name__=='__main__':
     global scoringMatrix
     scoringMatrix = args.scoringMatrix
     print('Using scoring matrix %s' % scoringMatrix)
+    exact = args.exact
+    if args.beam <= 1:
+        exact = True
 
     library = pd.read_csv(args.library)
     #clean RefSeq column
@@ -178,18 +165,14 @@ if __name__=='__main__':
         print(df.head())
         
         print("Extracting variable region from between Cy3' and quench' regions....")
-        df[['libRegion', 'libRegionPhred', 'whichThreePrime']] = df.apply(lambda row: get_hairpin(row, pValueCutoff=args.OligoPValue), axis=1, result_type='expand')
+        df[['libRegion', 'libRegionPhred']] = df.apply(lambda row: get_hairpin(row, pValueCutoff=args.OligoPValue, fiveprime_region=args.fiveprimeRegion, threeprime_region=args.threeprimeRegion), axis=1, result_type='expand')
 
         df.to_json('%s_libregion_only.json.zip' % args.o)
-        df.iloc[:1000].to_csv('%s_libregion_only_test.csv' % args.o,index=False)
+        #df.iloc[:1000].to_csv('%s_libregion_only_test.csv' % args.o,index=False)
 
     n_passed_alignment = len(df.loc[~df['libRegion'].isna()])
-    n_threeprime_0 = len(df.loc[~df['libRegion'].isna()][df.whichThreePrime==0])
-    n_threeprime_1 = len(df.loc[~df['libRegion'].isna()][df.whichThreePrime==1])
 
     print("%d/%d (%.2f) passed aligning to Cy3' quench' regions" % (n_passed_alignment, len(df), 100*n_passed_alignment/len(df)))
-    print("%d/%d (%.2f) were 3' region 0" % (n_threeprime_0, n_passed_alignment, 100*n_threeprime_0/n_passed_alignment))
-    print("%d/%d (%.2f) were 3' region 1" % (n_threeprime_1, n_passed_alignment, 100*n_threeprime_1/n_passed_alignment))
     
     df = df.loc[~df['libRegion'].isna()]
     df['len_libRegion'] = df.apply(lambda row: len(row['libRegion']), axis=1)
@@ -207,7 +190,7 @@ if __name__=='__main__':
 
     # match each libRegion to the most likely reference sequence from the library
     print("Aligning library region to reference sequences and matching to most likely ref sequence ....")
-    uniqueLibRegions[['RefSeq','RefSeqPValue']] = uniqueLibRegions.parallel_apply(lambda row: getLibraryRef(row['libRegion'],sort_lib_seqs, exact=args.exact,pValueCutoff=args.LibPValue, beam=args.beam),axis=1, result_type='expand')
+    uniqueLibRegions[['RefSeq','RefSeqPValue']] = uniqueLibRegions.parallel_apply(lambda row: getLibraryRef(row['libRegion'],sort_lib_seqs, exact=exact, pValueCutoff=args.LibPValue, beam=args.beam), axis=1, result_type='expand')
 
     #merge the library data to the unique_libregion data
     uniqueLibRegions = uniqueLibRegions.merge(library, on='RefSeq')

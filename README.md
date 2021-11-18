@@ -49,7 +49,8 @@ rule my_job:
     threads: 8
     params:
         cluster_memory = "12G",
-        cluster_time = "4:00:00"
+        cluster_time = "4:00:00",
+        num_cores = "6"
     shell: ...
 ```
 

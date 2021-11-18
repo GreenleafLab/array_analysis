@@ -1,3 +1,7 @@
+"""
+Functions for plotting locations of given clusters from sequencing data CPseq files.
+"""
+
 import matplotlib.pyplot as plt
 
 def plot_species_per_tile(file_name, contains=None, color = 'b'):
@@ -47,5 +51,5 @@ def plot_fiducial_all_tiles(CPseq_names, fig_names):
         plot_fiducial_in_tile(seqfile, figfile)
 
 
-print('\nHere we are', snakemake.input)
+print('\nPlotting fiducials from input:\n', snakemake.input)
 plot_fiducial_all_tiles(snakemake.input, snakemake.output)
