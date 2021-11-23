@@ -16,11 +16,11 @@ sequencingResult:
     # csv file (CPseq) holding sequencing data aligned to the library
     # either output of `align_lib2b.sh` or generated within the workflow
     # location: {datadir}/aligned/
-    ConsensusReads_20211115_exact.CPseq
+    ConsensusReads_20211118_exact.CPseq
 referenceLibrary:
-    # RefSeqs of the library design for alignment
+    # TSV file containing RefSeqs of the library design for alignment
     # should have a column named 'RefSeq'
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/reference/NNNlib2b_RefSeqs.csv
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/reference/NNNlib2b_annotation_nupack.tsv
 refSeqContext:
     # Context immediately surrounding the variable region in the library
     # Used for alignment
@@ -32,7 +32,7 @@ alignBeam:
     # Number of similar library reference sequences to try for alignment
     # if there is no exact match
     # if set to 0 or 1, only allow exact match
-    100
+    0
 # --- Begin post-array config with imaging data ---
 tifdir:
     # directory holding all tif images, with a trailing slash

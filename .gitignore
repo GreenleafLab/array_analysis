@@ -12,3 +12,4 @@ scripts/test.py
 #Snakemake#
 *.h5
 cpseriestest.csv
+workspace.code-workspace
