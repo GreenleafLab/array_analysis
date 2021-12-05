@@ -45,6 +45,9 @@ seriesdir:
     # output directory for CPseries files, with a trailing slash
     # recommended: {datadir}/series/
     /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series/
+seriesfile:
+    # A big merged signal file with all the tiles from `seriesdir`
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series_merged/NNNlib2b_DNA_20211022.pkl
 mapfile:
     # a csv file with column `condition`
     config/nnnlib2b_map.csv

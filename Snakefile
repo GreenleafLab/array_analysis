@@ -15,7 +15,7 @@ sequencingResult = datadir + 'aligned/' + config["sequencingResult"]
 TILES = ['tile%03d'%i for i in range(1,19)]
 TILES_NO_ZERO_PAD = ['tile%d'%i for i in range(1,19)]
 
-# == Comment this out after sequencing but before array experiment ==
+# == Decide which outputs to require base on progress of the experiment ==
 assert config["processingType"] in ['pre-array', 'post-array']
 if config["processingType"] == "pre-array":
     fluor_files = []
@@ -293,3 +293,20 @@ rule combine_signal:
         """
         python scripts/array_tools/bin_py3/processData.py -mf {input.oldmapfile} -od {output} --appendLibData {input.libdata} --num_cores {params.num_cores}
         """
+
+## normalize_signal: Given one merged CPseq file, normalize fluorescence signal for single cluster fit
+rule normalize_signal:
+    input:
+        CPseries_file = config["seriesfile"],
+        mapfile = config["mapfile"],
+        annotation = config["referenceLibrary"]
+    output:
+        figdir = expdir + "fig/normalization",
+        out_file = config["seriesfile"].split(".pkl")[0] + "_normalized.pkl"
+    params:
+        green_norm_condition = "Green07_PostCy3",
+        ext = ".pdf"
+    threads:
+        1
+    script:
+        "scripts/normalizeNNNlib2bSignal.py"
