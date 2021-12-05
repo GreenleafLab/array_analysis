@@ -125,7 +125,7 @@ if __name__=='__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("cpseq", help="CPseq file containing paired-end reads.")
-    parser.add_argument("--library", action='store',  help="CSV file containing library information. Must have column called 'RefSeq'.")
+    parser.add_argument("--library", action='store',  help="TSV file containing library information. Must have column called 'RefSeq'.")
     parser.add_argument("--exact", action='store_true',  help="Only return sequences that are exact match to library RefSeqs.")
     parser.add_argument("--beam", action='store', default=1000, help='beam search width.')
     parser.add_argument("--OligoPValue", action='store', default=1e-3, help='P-value cutoff for aligning reads to fluor and quench oligo.')
@@ -144,10 +144,11 @@ if __name__=='__main__':
     scoringMatrix = args.scoringMatrix
     print('Using scoring matrix %s' % scoringMatrix)
     exact = args.exact
-    if args.beam <= 1:
+
+    if int(args.beam) <= 1:
         exact = True
 
-    library = pd.read_csv(args.library)
+    library = pd.read_csv(args.library, sep='\t')
     #clean RefSeq column
     library['RefSeq'] = [x.upper().replace('U','T') for x in library['RefSeq']]
     # ensure ref seqs are sorted
@@ -190,7 +191,7 @@ if __name__=='__main__':
 
     # match each libRegion to the most likely reference sequence from the library
     print("Aligning library region to reference sequences and matching to most likely ref sequence ....")
-    uniqueLibRegions[['RefSeq','RefSeqPValue']] = uniqueLibRegions.parallel_apply(lambda row: getLibraryRef(row['libRegion'],sort_lib_seqs, exact=exact, pValueCutoff=args.LibPValue, beam=args.beam), axis=1, result_type='expand')
+    uniqueLibRegions[['RefSeq','RefSeqPValue']] = uniqueLibRegions.parallel_apply(lambda row: getLibraryRef(row['libRegion'],sort_lib_seqs, exact=exact, pValueCutoff=args.LibPValue, beam=int(args.beam)), axis=1, result_type='expand')
 
     #merge the library data to the unique_libregion data
     uniqueLibRegions = uniqueLibRegions.merge(library, on='RefSeq')
