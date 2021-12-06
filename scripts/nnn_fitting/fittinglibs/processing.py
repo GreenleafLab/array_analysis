@@ -138,17 +138,17 @@ def loadMapFile(mapFilename):
 def getFluorFileNames(directories):
     """Return dict with keys tile numbers and entries list of CPfluor files."""
     d = collections.defaultdict(list)
-    for idx, directory in directories.items():
+    for idx, directory in list(directories.items()):
         # find dict with keys=tile and values=filenames with extension 'CPfluor' in directory
         filenames = findTileFilesInDirectory(directory, ['CPfluor'])
-        if np.any([len(val)>1 for val in filenames.values()]):
-            print('Error: more than one CPfluor file exists in directory: ',directory)
+        if np.any([len(val)>1 for val in list(filenames.values())]):
+            print(('Error: more than one CPfluor file exists in directory: ',directory))
             print('for tiles:')
-            for key, val in filenames.items():
+            for key, val in list(filenames.items()):
                 if len(val) > 1:
-                    print('\t', key)
+                    print(('\t', key))
             print('using the newest file per tile.')
-            for key, val in filenames.items():
+            for key, val in list(filenames.items()):
                 if len(val) > 1:
                     filenames[key] = np.sort(val)[-1]
         #if length is greater than 1, throw error
@@ -177,7 +177,7 @@ def parseTimeStampFromFilename(CPfluorFilename):
 def getFluorFileNamesOffrates(directories):
     """Return dict whose keys are tile numbers and entries are a list of CPfluor files by concentration"""
     filenameDict = collections.defaultdict(list)
-    for idx, directory in directories.items():
+    for idx, directory in list(directories.items()):
         new_dict = addIndexToDir((findTileFilesInDirectory(directory, ['CPfluor'])))
         for tile, filenames in list(new_dict.items()):
             filenameDict[tile].append(filenames)
@@ -190,7 +190,7 @@ def getFluorFileNamesOffrates(directories):
     timeStampDict = {}
     for tile in list(filenameDict.keys()):
         timeStampDict[tile] = [parseTimeStampFromFilename(filename)
-                               for idx, filename in filenameDict[tile].items()]
+                               for idx, filename in list(filenameDict[tile].items())]
     allTimeStamps = []
     for times in list(timeStampDict.values()):
         for time in times:
@@ -284,7 +284,7 @@ def makeCPseriesFile(cpseriesfilename, fluorFiles, appendLibData=None):
     signal = pd.concat(signals, axis=1)
 
     print('Test signal:')
-    print(signal.head())
+    print((signal.head()))
 
     if not appendLibData is None:
         libData = pd.read_csv(appendLibData,delimiter='\t',index_col=0)

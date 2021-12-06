@@ -55,7 +55,7 @@ def loadFile(filename):
         return _loadTextFile(filename)
 
     else:
-        print('Extension %s not recognized. No file loaded.'%ext)
+        print(('Extension %s not recognized. No file loaded.'%ext))
         
 def saveFile(filename, data, **kwargs):
     """Save data to a file according to extension."""
@@ -73,7 +73,7 @@ def saveFile(filename, data, **kwargs):
         data.to_csv(filename, **kwargs)
 
     else:
-        print('Extension %s not recognized. No file saved.'%ext)
+        print(('Extension %s not recognized. No file saved.'%ext))
         
     
 def _loadCPseq(filename, **kwargs):
@@ -113,3 +113,10 @@ def _loadPickle(filename):
     return pickle.load( open( filename, "rb" ) )
 
 
+def get_temperature_from_header_nnnlib2b(columns):
+    """
+    Returns:
+        xvalues - np.array
+    """
+    xvalues = np.array([s.split('_')[1] for s in columns if 'Green' in s], dtype=float)
+    return xvalues

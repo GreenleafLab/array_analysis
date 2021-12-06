@@ -1,5 +1,12 @@
 """
-Normalize pooled CPseries files and perform single cluster fit for NNNlib2b.
+Normalize pooled CPseries files for NNNlib2b.
+Input:
+    Merged CPseries file
+    A mapfile csv file that instructs which columns to normalize and keep
+    An annotation tsv file that determines which variants to use as initial Fmax and Fmin controls
+Output:
+    Normalized data with columns ['clusterID', 'RefSeq'] + final_norm_conditions
+    where sequence number and temperatures are in the `final_norm_conditions` header
 Yuxi Ke, Nov 2021
 """
 from typing_extensions import final

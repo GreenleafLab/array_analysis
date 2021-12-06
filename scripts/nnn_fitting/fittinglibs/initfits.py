@@ -12,7 +12,7 @@ from fittinglibs import objfunctions, variables, fitting, plotting
 class FitParams():
     """Class with attributes objective function, initial params, upper/lowerbounds on params."""
     def __init__(self, func_name, x=None, y=None, init_kws={}, fit_kws={}, before_fit_ops=[]):
-        self.func_name = func_name
+        self.__name__ = func_name
         self.func = getattr(objfunctions, func_name)
         self.param_names = self.func(None, None, return_param_names=True)
         self.x = x
@@ -21,7 +21,8 @@ class FitParams():
         self.init_kws = init_kws # dict of {param_name:{'initial':val}} etc
 
         # these operations will be performed before fitting
-        self.before_fit_ops = before_fit_ops # formatted like [('fmax', 'initial', lambda y: y.max)]
+        # formatted like (param_name, key, operation), e.g. [('fmax', 'initial', lambda y: y.max)]
+        self.before_fit_ops = before_fit_ops 
         
         if x is not None:        
             # go through and get default initiation point for each fit param
@@ -98,7 +99,7 @@ class FitParams():
         # plot the data
         line, = plotting.plt.plot(x, y, 'o', **kwargs)
         if plot_fit:
-            if 'color' in kwargs.keys(): kwargs.pop('color')
+            if 'color' in list(kwargs.keys()): kwargs.pop('color')
             params = _get_params_from_results(results, self.param_names)
             plotting.plt.plot(more_x, self.func(params, more_x), color=line.get_color(), **kwargs)
 
@@ -185,7 +186,7 @@ class MoreFitParams():
         # update parameters based on initial points
         if use_initial:
             init_kws = {}
-            for param_name, param_dict in fit_parameters.items():
+            for param_name, param_dict in list(fit_parameters.items()):
                 new_init = initial_points.loc[param_name]
                 if param_dict['vary'] and not pd.isnull(new_init):
                     init_kws[param_name] = {'initial':new_init}              
@@ -268,9 +269,9 @@ class MoreFitParams():
             if print_bool:
                 num_steps = max(min(100, (int(len(variants)/100.))), 1)
                 if (i+1)%num_steps == 0:
-                    print ('working on %d out of %d iterations (%d%%)'
+                    print(('working on %d out of %d iterations (%d%%)'
                            %(i+1, len(variants), 100*(i+1)/
-                             float(len(variants))))
+                             float(len(variants)))))
                     sys.stdout.flush() 
             
             # fit individual curves
@@ -320,7 +321,7 @@ class MoreFitParams():
     
         # plot the data
         line, = plotting.plt.plot(x, y, 'o', **kwargs)
-        if 'color' in kwargs.keys(): kwargs.pop('color')
+        if 'color' in list(kwargs.keys()): kwargs.pop('color')
         
         # plot the errorbars
         eminus, eplus = fitting.findErrorBarsBindingCurve(ys)
@@ -330,7 +331,7 @@ class MoreFitParams():
         plotting.plt.plot(more_x, func(params, more_x), color=line.get_color(), **kwargs)
         
         # plot the bounds
-        if self.fitParams.func_name=='binding_curve' or self.fitParams.func_name=='binding_curve_nonlinear':
+        if self.fitParams.__name__=='binding_curve' or self.fitParams.__name__=='binding_curve_nonlinear':
             param_names_ub = [param + '_lb' if param=='dG' else param + '_ub' if param=='fmax' else param for param in param_names]
             param_names_lb = [param + '_ub' if param=='dG' else param + '_lb' if param=='fmax' else param for param in param_names]
             if all([s in results.index.tolist() for s in param_names_ub + param_names_lb]):
@@ -373,7 +374,7 @@ class MoreFitParams():
 
 def _convert_to_expected_fit_parameters(fit_parameters):
     """Assuming fit parameters are in dict format, convert to old format (dataframe)."""
-    return pd.concat({key:pd.Series(val) for key, val in fit_parameters.items()}).unstack(level=0)
+    return pd.concat({key:pd.Series(val) for key, val in list(fit_parameters.items())}).unstack(level=0)
 
 def _get_params_from_results(results, param_names, rename_param_names=None):
     """Convert between params and results."""
@@ -386,7 +387,7 @@ def _get_params_from_results(results, param_names, rename_param_names=None):
 def _get_init_params(fit_parameters):
     """Return lmfit Parameters class."""
     params = Parameters()
-    for param_name, init_dict in fit_parameters.items():
+    for param_name, init_dict in list(fit_parameters.items()):
         params.add(param_name, value=init_dict['initial'],
                min = init_dict['lowerbound'],
                max = init_dict['upperbound'],
@@ -396,9 +397,9 @@ def _get_init_params(fit_parameters):
 def _update_init_params(fit_parameters, **init_kws):
     """Return an updated fit parameters dict bsed on new vals in init_kws."""
     fit_parameters_new = copy.deepcopy(fit_parameters)
-    for param_name, param_dict in fit_parameters_new.items():
-        if param_name in init_kws.keys():
-            for key, val in init_kws[param_name].items():
+    for param_name, param_dict in list(fit_parameters_new.items()):
+        if param_name in list(init_kws.keys()):
+            for key, val in list(init_kws[param_name].items()):
                 if val is not None:
                     param_dict[key] = val
         fit_parameters_new[param_name] = param_dict
@@ -418,7 +419,7 @@ def process_new_params(args ):
             elif len(val) != len(args.params_name):
                 raise IndexError('must have same number of values in --params_name and --%s'%name)
     elif any([getattr(args, name) for name in names]):
-        print 'Warning: no params are changed. Need to define --params_name if you want to effect changes in the fit params.'
+        print('Warning: no params are changed. Need to define --params_name if you want to effect changes in the fit params.')
     
     # if there is nothing to change, set all to be a list of length 1
     if args.params_name is None:

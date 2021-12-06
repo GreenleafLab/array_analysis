@@ -12,7 +12,7 @@ import os
 import scipy.stats as st
 import matplotlib as mpl
 from fittinglibs import plotting, fitting, distribution
-from plotting import fix_axes
+from .plotting import fix_axes
 import ipdb
 
 def findExtInList(directory, ext):
@@ -21,7 +21,7 @@ def findExtInList(directory, ext):
         files = os.listdir(directory)
         return [os.path.join(directory, i) for i in files if i.find(ext)>-1 and i.find(ext)==len(i)-len(ext)]
     else:
-        print 'No directory named: %s'%directory
+        print('No directory named: %s'%directory)
         return []
 
 def loadFile(directory, ext):
@@ -29,13 +29,13 @@ def loadFile(directory, ext):
     filenames = findExtInList(directory, ext)
     if len(filenames)==1:
         data = fileio.loadFile(filenames[0])
-        print 'Loaded file: %s'%filenames[0]
+        print('Loaded file: %s'%filenames[0])
     else:
         data = None
         if len(filenames) > 1:
-            print 'More than one file found: %s'%('\t\n'.join(filenames))
+            print('More than one file found: %s'%('\t\n'.join(filenames)))
         else:
-            print 'Could not find extension %s in directory %s'%(ext, directory)
+            print('Could not find extension %s in directory %s'%(ext, directory))
     return data
 
 def initialize(directory):
@@ -81,7 +81,7 @@ def errorPropagateAverage(sigmas, weights):
     sigma_out = np.sqrt(np.sum([np.power(weight*sigma/weights.sum(), 2)
                                 if weight != 0
                                 else 0
-                                for sigma, weight in itertools.izip(sigmas, weights)]))
+                                for sigma, weight in zip(sigmas, weights)]))
     return sigma_out
 
 def errorPropagateAverageAll(sigmas, weights, index=None):
@@ -101,7 +101,7 @@ def weightedAverage(values, weights):
     average = (np.sum([value*weight
                        if weight != 0
                        else 0
-                       for value, weight in itertools.izip(values, weights)])/
+                       for value, weight in zip(values, weights)])/
                 weights.sum())
     return average
 
@@ -151,7 +151,7 @@ class perVariant():
         """Plot a binding curve of a particular variant."""
         subSeries = self.getVariantBindingSeries(variant)
         if len(subSeries)==0:
-            print 'No fluorescence data associated with variant %s'%str(variant)
+            print('No fluorescence data associated with variant %s'%str(variant))
             return
         concentrations = self.x
         variant_table = self.variant_table
@@ -182,7 +182,7 @@ class perVariant():
         fitParameters = pd.DataFrame(columns=['fmax', 'koff', 'fmin'])
         
         if len(subSeries)==0:
-            print 'No fluorescence data associated with variant %s'%str(variant)
+            print('No fluorescence data associated with variant %s'%str(variant))
             return
         
         # find tiles with variant cluster
@@ -198,7 +198,7 @@ class perVariant():
             tileInit, otherTiles = tiles[0], tiles[1:]
 
         if np.in1d(clusterTiles, np.hstack([tileInit, otherTiles])).sum()==0:
-            print 'No fluorescence data associated with variant %s'%str(variant)
+            print('No fluorescence data associated with variant %s'%str(variant))
             return 
         
         # initiae plot
@@ -239,16 +239,16 @@ class perVariant():
         clusterTiles = self.getVariantTiles(variant)
         
         if len(subSeries)==0:
-            print 'No fluorescence data associated with variant %s'%str(variant)
+            print('No fluorescence data associated with variant %s'%str(variant))
             return
         
-        time_delta = np.min([(np.array(times[1:]) - np.array(times[:-1])).min() for times in timeDict.values()])
-        max_time = np.max([np.max(times) for times in timeDict.values()])
+        time_delta = np.min([(np.array(times[1:]) - np.array(times[:-1])).min() for times in list(timeDict.values())])
+        max_time = np.max([np.max(times) for times in list(timeDict.values())])
         time_bins = np.arange(0, max_time+time_delta*2, time_delta)
         
         # bin the times
         d  = []
-        for key, times in timeDict.items():
+        for key, times in list(timeDict.items()):
             idx = np.digitize(times, time_bins) - 1
             subMat = subSeries.loc[clusterTiles==key]
             subMat.columns=idx
@@ -276,7 +276,7 @@ class perVariant():
             fluorescence = self.binding_series.loc[cluster]
         else:
             if variant is None:
-                print 'Error: need to define either variant or cluster!'
+                print('Error: need to define either variant or cluster!')
                 return
             subSeries = self.getVariantBindingSeries(variant)
             if idx is not None:
@@ -493,11 +493,11 @@ class perVariant():
         fitParameters.loc['initial', 'fmax'] = fmaxDistObject.getDist(1).stats(moments='m')
         
         fittype = 'binding'
-        if 'fit_slope' in func_kwargs.keys():
+        if 'fit_slope' in list(func_kwargs.keys()):
             if func_kwargs['fit_slope']:
                 fitParameters.loc[:, 'slope'] = [0, 0.0006, np.inf, True]
                 fittype = 'binding_linear'
-        print fitParameters
+        print(fitParameters)
         
         # fit
         results = fitting.perVariant(concentrations, subSeries,
@@ -993,7 +993,7 @@ class manyFlows():
     def plotAllInitVsFinal(self, param='dG', colorby='fmax_init', limits=[-12.5, -6], order=None, **kwargs):
         """For each of the variant tables, plot the dG init versus dG final"""
         alldata = []
-        for name, data in self.flowData.items():
+        for name, data in list(self.flowData.items()):
             subdata = data.variant_table.loc[:, ['%s_init'%param, param]]
             subdata.loc[:, 'expt'] = name
             subdata.loc[:, 'colorby'] = data.variant_table.loc[:, colorby]

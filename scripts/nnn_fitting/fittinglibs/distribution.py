@@ -33,7 +33,7 @@ class fmaxDistAny():
     def getDist(self, n, do_gamma=None):
 
         if self.params is None:
-            print 'Error: define popts'
+            print('Error: define popts')
             return
         params = self.params
         
@@ -250,13 +250,13 @@ def findParams(tight_binders, use_simulated=None, table=None, single_std=False):
     if use_simulated is None:
         use_simulated = False
     if use_simulated and (table is None):
-        print "error: need to give table of all cluster fits to do simulated data"
+        print("error: need to give table of all cluster fits to do simulated data")
         return
     
     mean_fmax, bounds, loose_bounds = getFmaxMeanAndBounds(tight_binders)
     fmaxes_data, n_tests_data = getFmaxesToFit(tight_binders, bounds=bounds)
     if len(fmaxes_data) < 3:
-        print "error: not enough fmaxes to fit distribution"
+        print("error: not enough fmaxes to fit distribution")
         return
     
     if use_simulated:

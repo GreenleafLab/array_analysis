@@ -181,7 +181,7 @@ def plotFitCurve(x, subSeries, results, param_names=None, ax=None, log_axis=True
         further_process = False
         xlabel = ''
         if param_names is None:
-            print('Need to define param names or fittype. fittype %s not recognized! Exiting.'%(fittype))
+            print(('Need to define param names or fittype. fittype %s not recognized! Exiting.'%(fittype)))
             sys.exit()
         
     # allow custom definition of param_names with fitParameters 

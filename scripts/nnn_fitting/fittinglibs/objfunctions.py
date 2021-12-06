@@ -3,6 +3,7 @@ import pandas as pd
 from fittinglibs import fitting
 from fittinglibs.variables import fittingParameters
 from math import factorial
+import sys
 
 def rates_off(params, times, data=None, weights=None, index=None, bleach_fraction=1, image_ns=None, return_param_names=False):
     """ Return fit value, residuals, or weighted residuals of off rate objective function. """
@@ -252,7 +253,7 @@ def processFuncInputs(func_name, x, params_to_change=None, params_init=None, par
     elif func_name == 'melt_curve':
         param_names = ['fmin', 'dH', 'Tm', 'fmax']
     else:
-        print "Function %s not recognized. Must have default param names for each func in objfunctions!."%func_name
+        print("Function %s not recognized. Must have default param names for each func in objfunctions!."%func_name)
         sys.exit()
     
     # change the params specified by "params_to_change", to values specified in other arguments.
@@ -269,7 +270,7 @@ def processFuncInputs(func_name, x, params_to_change=None, params_init=None, par
     fitParameters = []
     for i, param_name in enumerate(param_names):
         # add default initial values
-        if param_name in param_changes.keys():
+        if param_name in list(param_changes.keys()):
             lowerbound, init_val, upperbound , vary = param_changes[param]
         else:
             lowerbound, init_val, upperbound , vary = None, None, None, None

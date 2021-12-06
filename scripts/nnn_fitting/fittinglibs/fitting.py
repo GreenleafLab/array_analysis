@@ -12,7 +12,7 @@ import scipy.stats as st
 import copy
 import datetime
 from fittinglibs import variables
-from variables import fittingParameters
+from .variables import fittingParameters
 
 def getFitParam(param, concentrations=None, init_val=None, vary=None, ub=None, lb=None):
     """For a given fit parameter, return reasonable lowerbound, initial guess, and upperbound.
@@ -25,7 +25,7 @@ def getFitParam(param, concentrations=None, init_val=None, vary=None, ub=None, l
     fitParam = pd.Series(index=['lowerbound', 'initial', 'upperbound'], name=param)
     if param=='dG':
         if concentrations is None:
-            print 'must specify concentrations to find initial parameters for dG'
+            print('must specify concentrations to find initial parameters for dG')
             return fitParam
         parameters = fittingParameters(concentrations=concentrations)
         fitParam.loc['lowerbound'] = parameters.find_dG_from_Kd(parameters.find_Kd_from_frac_bound_concentration(0.99, concentrations[0]))
@@ -45,7 +45,7 @@ def getFitParam(param, concentrations=None, init_val=None, vary=None, ub=None, l
         fitParam.loc[:] = [0, 3E-4, np.inf]
 
     else:
-        print 'param %s not recognized.'%param
+        print('param %s not recognized.'%param)
     
     # change vary
     if vary is not None:
@@ -84,7 +84,7 @@ def getInitialFitParameters(concentrations):
     # find dG
     fitParameters.loc[:, 'dG'] = [parameters.find_dG_from_Kd(
         parameters.find_Kd_from_frac_bound_concentration(frac_bound, concentration))
-             for frac_bound, concentration in itertools.izip(
+             for frac_bound, concentration in zip(
                                     [0.99, 0.5, 0.01],
                                     [concentrations[0], concentrations[-1], concentrations[-1]])]
  
@@ -253,18 +253,18 @@ def enforceFmaxDistribution(median_fluorescence, fmaxDist, verbose=None, cutoff=
     if median_fluorescence[-1] < lowerbound:
         redoFitFmax = True
         if verbose:
-            print (('last concentration is below lb for fmax (%4.2f out of '
+            print((('last concentration is below lb for fmax (%4.2f out of '
                    '%4.2f (%d%%). Doing bootstrapped fit with fmax'
                    'samples from dist')
                 %(median_fluorescence[-1], lowerbound,
-                  median_fluorescence[-1]*100/lowerbound))
+                  median_fluorescence[-1]*100/lowerbound)))
     else:
         redoFitFmax = False
         if verbose:
-            print (('last concentration is above lb for fmax (%4.2f out of %4.2f '+
+            print((('last concentration is above lb for fmax (%4.2f out of %4.2f '+
                    '(%d%%). Proceeding by varying fmax')
                 %(median_fluorescence[-1], lowerbound,
-                  median_fluorescence[-1]*100/lowerbound))
+                  median_fluorescence[-1]*100/lowerbound)))
     return redoFitFmax
 
 def getClusterIndices(subSeries, n_samples=100, enforce_fmax=False, verbose=False):
@@ -274,14 +274,14 @@ def getClusterIndices(subSeries, n_samples=100, enforce_fmax=False, verbose=Fals
     if numTests <10 and np.power(numTests, numTests) <= n_samples and not enforce_fmax:
         # then do all possible permutations
         if verbose:
-            print ('Doing all possible %d product of indices'
-                   %np.power(numTests, numTests))
+            print(('Doing all possible %d product of indices'
+                   %np.power(numTests, numTests)))
         indices = [list(i) for i in itertools.product(*[subSeries.index]*numTests)]
     else:
         # do at most 'n_samples' number of iterations
         if verbose:
-            print ('making %4.0f randomly selected (with replacement) '
-                   'bootstrapped median binding curves')%n_samples
+            print(('making %4.0f randomly selected (with replacement) '
+                   'bootstrapped median binding curves')%n_samples)
         indices = np.random.choice(subSeries.index,
                                    size=(n_samples, len(subSeries)), replace=True)
     return indices
@@ -335,7 +335,7 @@ def bootstrapCurves(x, subSeries, fitParameters, fmaxDist, func,
     for i, clusters in enumerate(indices):
         if verbose:
             if i%(n_samples/10.)==0:
-                print 'working on %d out of %d, %d%%'%(i, n_samples, i/float(n_samples)*100)
+                print('working on %d out of %d, %d%%'%(i, n_samples, i/float(n_samples)*100))
         if enforce_fmax:
             fitParameters.loc['initial', 'fmax'] = fmaxes[i]
         
@@ -390,9 +390,9 @@ def fitSetClusters(fitParams, ySeries, print_bool=True):
         if print_bool:
             num_steps = max(min(100, (int(len(ySeries)/100.))), 1)
             if (i+1)%num_steps == 0:
-                print ('working on %d out of %d iterations (%d%%)'
+                print(('working on %d out of %d iterations (%d%%)'
                        %(i+1, len(ySeries), 100*(i+1)/
-                         float(len(ySeries))))
+                         float(len(ySeries)))))
                 sys.stdout.flush()
         # fit single cluster
         y = ySeries.loc[idx]
@@ -469,7 +469,7 @@ def returnParamsFromResults(final_params, param_names=None):
 def returnParamsFromResultsBounds(final_params, param_names, ub_vec):
     params_ub = Parameters()
     for param in ['%s%s'%(param, suffix) for param, suffix in
-                  itertools.izip(param_names, ub_vec)]:
+                  zip(param_names, ub_vec)]:
         name = param.split('_')[0]
         params_ub.add(name, value=final_params.loc[param])
     return params_ub
@@ -499,7 +499,7 @@ def returnResultsFromParams(params, results, y):
     rsq = 1-ss_error/ss_total
     rmse = np.sqrt(ss_error)
     
-    param_names = params.keys()
+    param_names = list(params.keys())
     index = (param_names + ['%s_stde'%param for param in param_names] +
              ['rsq', 'exit_flag', 'rmse'])
     final_params = pd.Series(index=index)

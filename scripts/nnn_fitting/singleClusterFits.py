@@ -5,7 +5,7 @@ Fits all single clusters.
 
 Input:
 CPsignal file
-xvalues file
+*xvalues file
 
 Output:
 normalized binding series file
@@ -17,6 +17,7 @@ Sarah Denny
 
 import os
 import numpy as np
+from numpy.ma.core import default_fill_value
 import pandas as pd
 import argparse
 import sys
@@ -32,7 +33,7 @@ from fittinglibs import (plotting, fitting, fileio, seqfun, distribution, objfun
 ################ Parse input parameters ################
 
 #set up command line argument parser
-parser = argparse.ArgumentParser(description='fit single clusters to binding curve')
+parser = argparse.ArgumentParser(description='fit single clusters to melt curve')
 processing.add_common_args(parser.add_argument_group('common arguments'), required_x=True)
 
 group = parser.add_argument_group('optional arguments for single cluster fitting')
@@ -42,7 +43,11 @@ group.add_argument('--subset_num', default=5000, type=int,
                     help='do at most this many single clusters when the subset flag is true. default=5000')
 
 group = parser.add_argument_group('arguments about fitting function')
-group.add_argument('--func', default = 'binding_curve',
+group.add_argument('--use_xvalue_from_header', action='store_true', default=False,
+                   help='if use xvalue from header, parse from the column names of CPseries file')
+group.add_argument('--parse_xvalue_func', type=str, default='get_temperature_from_header_nnnlib2b',
+                  help='Name of the function in fileio to use to parse xvalues if use_xvalue_from_header is true')
+group.add_argument('--func', default = 'melt_curve',
                    help='fitting function. default is "binding_curve", referring to module names in fittinglibs.objfunctions.')
 group.add_argument('--params_name', nargs='+', help='name of param(s) to edit.')
 group.add_argument('--params_init', nargs='+', type=float, help='new initial val(s) of param(s) to edit.')
@@ -54,13 +59,13 @@ group.add_argument('--params_ub', nargs='+', type=float, help='new upperbound va
 #                    help='if flagged, do not fit, but save the fit parameters')
 
 
-def splitAndFit(fitParams, bindingSeries, numCores, index=None):
+def splitAndFit(fitParams, meltSeries, numCores, index=None):
     """ Given a table of binding curves, parallelize fit. """
     if index is None:
-        index = bindingSeries.index    
-    logging.info('Fitting binding curves:')
+        index = meltSeries.index    
+    logging.info('Fitting curves:')
     fits = (Parallel(n_jobs=numCores, verbose=10)
-            (delayed(fitting.perCluster)(fitParams, bindingSeries.loc[idx])
+            (delayed(fitting.perCluster)(fitParams, meltSeries.loc[idx])
              for idx in index))
     
     return pd.concat({idx:val for idx, val in zip(index, fits)}).unstack()
@@ -93,10 +98,14 @@ if __name__=="__main__":
             args.out_file = basename + '.CPfitted.gz'
 
     # load files
-    logging.info("Loading binding series...")
-    xvalues = np.loadtxt(args.xvalues)
-    bindingSeries = fileio.loadFile(args.binding_series)  
-    min_xval_col = pd.Series(xvalues, index=bindingSeries.columns).idxmin()
+    logging.info("Loading series...")
+    meltSeries = fileio.loadFile(args.binding_series)  
+    if not args.get_xvalue_from_header:
+        xvalues = np.loadtxt(args.xvalues)
+    else:
+        xvalues = getattr(fileio, args.parse_xvalue_func)(meltSeries.columns)
+        
+    min_xval_col = pd.Series(xvalues, index=meltSeries.columns).idxmin()
     
     # Initialize the fit parameters class.
     # This includes defining the fitting function, defining the xvalues,
@@ -112,14 +121,14 @@ if __name__=="__main__":
             fitParams.update_init_params(**{param_name:{'initial':param_init, 'lowerbound':param_lb, 'upperbound':param_ub, 'vary':bool(param_vary)}})
         
     # only table with at least 4 entries (with three free params)
-    index_all = bindingSeries.dropna(axis=0, thresh=4).index.tolist()
+    index_all = meltSeries.dropna(axis=0, thresh=4).index.tolist()
     if args.subset:
         # take a subset of indices
         if len(index_all) > args.subset_num:
             index_all = index_all[:args.subset_num]
 
     # fit
-    fitResults = splitAndFit(fitParams, bindingSeries, args.numCores, index=index_all)
+    fitResults = splitAndFit(fitParams, meltSeries, args.numCores, index=index_all)
     # save
     fitResults.to_csv(args.out_file, sep='\t', compression='gzip')
 

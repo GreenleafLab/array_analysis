@@ -10,7 +10,7 @@ def reverseComplement(seq, rna=None):
     if rna is None: rna = False
     for base in seq:
         if base not in 'NATCGUatcgu':
-            print "TypeError: NOT a DNA sequence\t%s"%seq
+            print("TypeError: NOT a DNA sequence\t%s"%seq)
             return None
     seq_dict = {}
     seq_complement = 'TAGCAN'
@@ -64,7 +64,7 @@ def getFDR_onetailed(scores, nullscores):
     """
     q = np.zeros(len(scores))
     for i, score in enumerate(scores):
-        if i%1000==0: print 'iteration %d'%i
+        if i%1000==0: print('iteration %d'%i)
         q[i] = np.sum(np.abs(nullscores) > np.abs(score))/float(len(nullscores)) 
     return q
 
@@ -172,7 +172,7 @@ def transform_data(data, loadings, scale_params=None):
                 data = ((data - scale_params[0])/scale_params[1]).copy()
                 failed = False
         if failed:
-            print 'check dimensions of scale_params'
+            print('check dimensions of scale_params')
     
     transformed = pd.DataFrame(np.dot(loadings, data.transpose())).transpose()
     transformed.index = data.index
