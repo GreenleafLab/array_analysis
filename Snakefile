@@ -86,7 +86,7 @@ rule convert_FLASH_to_CPseq:
     conda:
         "envs/align.yml"
     shell:
-        "python scripts/convert_flash_output_to_CPseq.py {input} {output}"
+        "python scripts/convertFLASH_OutputToCPseq.py {input} {output}"
 
 
 
@@ -220,7 +220,7 @@ rule plot_fiducials:
     threads:
         1
     script:
-        "scripts/plot_seqs.py"
+        "scripts/plotSeqs.py"
 
 
 ## quantify_images: quantify intensities in tif and write to CPfluor
@@ -270,7 +270,7 @@ rule write_old_mapfile:
     conda:
         "envs/py36.yml"
     shell:
-        "python scripts/write_old_mapfile.py {params.fluordir} {config[mapfile]} {output.oldmapfile}"
+        "python scripts/writeOldMapfile.py {params.fluordir} {config[mapfile]} {output.oldmapfile}"
 
 
 ## combine_signal: Integrate and combine CPfluor files of different conditions into a single CPseries file per tile
@@ -302,7 +302,8 @@ rule normalize_signal:
         annotation = config["referenceLibrary"]
     output:
         figdir = expdir + "fig/normalization",
-        out_file = config["seriesfile"].split(".pkl")[0] + "_normalized.pkl"
+        out_file = config["seriesfile"].split(".pkl")[0] + "_normalized.pkl",
+        xdata_file = config["seriesfile"].split(".pkl")[0] + "_xdata.txt"
     params:
         green_norm_condition = "Green07_PostCy3",
         ext = ".pdf"

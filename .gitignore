@@ -4,6 +4,7 @@
 *.pyc
 *.py~
 *.py#
+*.bak
 *.tempLog
 scripts/test.py
 *.err

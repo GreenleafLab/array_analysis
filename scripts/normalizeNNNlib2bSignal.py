@@ -1,5 +1,13 @@
 """
-Normalize pooled CPseries files and perform single cluster fit for NNNlib2b.
+Normalize pooled CPseries files for NNNlib2b.
+Input:
+    Merged CPseries file
+    A mapfile csv file that instructs which columns to normalize and keep
+    An annotation tsv file that determines which variants to use as initial Fmax and Fmin controls
+Output:
+    Normalized data with index 'clusterID' and columns final_norm_conditions
+    where sequence number and temperatures are in the `final_norm_conditions` header
+
 Yuxi Ke, Nov 2021
 """
 from typing_extensions import final
@@ -35,6 +43,18 @@ def get_conditions_from_mapfile(mapfile, channel):
     metadata = pd.read_csv(mapfile)
     return metadata[metadata['curve_channel'] == channel]['condition'].tolist()
 
+
+def get_xdata_from_condition(condition):
+    """
+    Args:
+        condition - str, e.g. Green13_25
+    Returns:
+        xdata - str, temperature in Kalvin
+    """
+    xdata = float(condition.split('_')[1]) + 273.15
+    return '%.2f'%xdata
+
+
 def get_long_and_stem_refseq(annotation):
 
     control_refseq = np.unique(annotation[annotation['ConstructType'] == 'Control']['RefSeq'])
@@ -45,7 +65,9 @@ def get_long_and_stem_refseq(annotation):
 
 
 def get_refseq_median(refseq, df, conditions):
-    
+
+    warnings.filterwarnings("ignore")
+
     temperature = [cond.split('_')[1] for cond in conditions]
     vardf = df[df['RefSeq'] == refseq]
     refseq_median = np.nanmedian(vardf[conditions].values, axis=0)
@@ -120,9 +142,10 @@ if __name__ == '__main__':
         CPseries_file = snakemake.input['CPseries_file']
         mapfile = snakemake.input['mapfile']
         annotation_file = snakemake.input['annotation']
+        green_norm_condition = snakemake.params['green_norm_condition']
         figdir = snakemake.output['figdir']
         out_file = snakemake.output['out_file']
-        green_norm_condition = snakemake.params['green_norm_condition']
+        xdata_file = snakemake.output['xdata_file']
         ext = snakemake.params['ext']
     else:
         # Runnig as a test
@@ -132,6 +155,7 @@ if __name__ == '__main__':
         green_norm_condition = 'Green07_PostCy3'
         figdir = '.\\fig\\20211123'
         out_file = 'NNNlib2b_DNA_20211022_normalized.pkl'
+        xdata_file = 'NNNlib2b_DNA_20211022_xdata.txt'
         ext = '.png'
 
     # Load the data and condition names
@@ -179,5 +203,9 @@ if __name__ == '__main__':
     plot_color_coded_WC_examples(clean_df, annotation, final_norm_conditions, fig_path, n_varaint_to_plot=40)
 
     # Save normalized data
-    clean_df[['clusterID', 'RefSeq'] + final_norm_conditions].to_pickle(out_file)
+    clean_df[['clusterID'] + final_norm_conditions].set_index('clusterID').to_pickle(out_file)
+    xdata = [get_xdata_from_condition(s) + '\n' for s in green_conditions]
+    with open(xdata_file, 'w+') as fh:
+        fh.writelines(xdata)
     print('Saved normalized data to %s' % out_file)
+    print('Saved xdata to %s' % xdata_file)
