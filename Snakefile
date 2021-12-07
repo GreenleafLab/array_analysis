@@ -2,7 +2,7 @@ import os
 from scripts.util import *
 
 ####### SELECT CONFIG FILE HERE #######
-configfile: "config/config_NNNlib2b_Nov11.yaml"
+configfile: "config/config_NNNlib2b_20211022.yaml"
 #######################################
 
 # --- Define Global Variables --- #
@@ -10,6 +10,7 @@ configfile: "config/config_NNNlib2b_Nov11.yaml"
 datadir = config['datadir']
 expdir = os.path.normpath(datadir + '/../') + '/'
 sequencingResult = datadir + 'aligned/' + config["sequencingResult"]
+normalizedSeries = datadir + "series_normalized/" + config["imagingExperiment"] + "_normalized.pkl"
 
 # hardcoded tile numbers
 TILES = ['tile%03d'%i for i in range(1,19)]
@@ -23,7 +24,10 @@ if config["processingType"] == "pre-array":
                         expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)]
 elif config["processingType"] == "post-array":
     fluor_files = get_fluor_names_from_mapfile(config["mapfile"], config["tifdir"], config["fluordir"])
-    requested_output = [fluor_files, config["seriesdir"]]
+    requested_output = config["seriesdir"]#[fluor_files, config["seriesdir"]]
+    
+    if config["fitting"] == "NNN":
+        requested_output.append(normalizedSeries)
 
 #wildcard_constraints:
 
@@ -31,7 +35,7 @@ elif config["processingType"] == "post-array":
 
 rule all:
     input:
-        requested_output
+        # requested_output
         #"%s_STATS.csv" % sequencingResult.strip('.CPseq'),
         #config["sequencingResult"]#, #== Align sequencing data ==
         #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES) #== Plot fiducials ==
@@ -39,6 +43,7 @@ rule all:
         #fluor_files
         #config["seriesdir"]
         #datadir + "fluor/Green16_25/NNNlib2b_DNA_tile1_green_600ms_2011.10.22-16.51.13.953.CPfluor" #== Example image quantification ==
+        normalizedSeries
 
 
 # --- Rules --- #
@@ -302,8 +307,8 @@ rule normalize_signal:
         annotation = config["referenceLibrary"]
     output:
         figdir = expdir + "fig/normalization",
-        out_file = config["seriesfile"].split(".pkl")[0] + "_normalized.pkl",
-        xdata_file = config["seriesfile"].split(".pkl")[0] + "_xdata.txt"
+        out_file = config["imagingExperiment"] + "_normalized.pkl",
+        xdata_file = config["imagingExperiment"] + "_xdata.txt"
     params:
         green_norm_condition = "Green07_PostCy3",
         ext = ".pdf"
@@ -311,3 +316,18 @@ rule normalize_signal:
         1
     script:
         "scripts/normalizeNNNlib2bSignal.py"
+
+## fit_single_cluster
+rule fit_single_cluster:
+    input:
+        normalized = normalizedSeries,
+        xdata = config["imagingExperiment"] + "_xdata.txt"
+    output:
+        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPfitted.gz"
+    threads:
+        12
+    params:
+        cluster_time = "20:00:00",
+        cluster_memory = "32G"
+    shell:
+        "python scripts/nnn_fitting/singleClusterFits.py -b {input.normalized} -x {input.xdata} -o {output} --func melt_curve"

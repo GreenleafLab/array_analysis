@@ -1,0 +1,71 @@
+# === Experiment-dependent configurations === #
+experimentName:
+    NNNlib2b
+processingType:
+    # either 'pre-array' or 'post-array'
+    # 'pre-array' for sequencing processing only
+    pre-array
+fitting:
+    # either 'NNN' or 'None'
+    # if NNN, fit curves
+    # if None, only do the standard processing till CPseries
+    NNN
+datadir:
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/
+fastq:
+    read1:
+        /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/fastq/NNNlib2b_S1_L001_R1_001.fastq
+    read2:
+        /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/fastq/NNNlib2b_S1_L001_R2_001.fastq
+sequencingResult:
+    # csv file (CPseq) holding sequencing data aligned to the library
+    # either output of `align_lib2b.sh` or generated within the workflow
+    # location: {datadir}/aligned/
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/aligned/ConsensusReads_20211012_exact.CPseq
+referenceLibrary:
+    # TSV file containing RefSeqs of the library design for alignment
+    # should have a column named 'RefSeq'
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/reference/NNNlib2b_annotation_nupack.tsv
+refSeqContext:
+    # Context immediately surrounding the variable region in the library
+    # Used for alignment
+    fiveprime:
+        'GCTGTTGAAGGCTCGCGATGCACACGCTCTGGTACAAGGAA'
+    threeprime:
+        'AAGGCACTGGGCAATACGAGCTCAAGCCAGTCTCGCAGTCC'
+alignBeam:
+    # Number of similar library reference sequences to try for alignment
+    # if there is no exact match
+    # if set to 0 or 1, only allow exact match
+    0
+# --- Begin post-array config with imaging data ---
+imagingExperiment:
+    NNNlib2b_DNA_20211022
+tifdir:
+    # directory holding all tif images, with a trailing slash
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/images_20211022/
+fluordir:
+    # output directory for CPfluor files, with a trailing slash
+    # recommemded: {datadir}/fluor/
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/fluor/
+seriesdir:
+    # output directory for CPseries files, with a trailing slash
+    # recommended: {datadir}/series/
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/series/
+seriesfile:
+    # A big merged signal file with all the tiles from `seriesdir`
+    /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/series_merged/NNNlib2b_DNA_20211022.pkl
+mapfile:
+    # a csv file with column `condition`
+    config/nnnlib2b_map.csv
+FIDfilter:
+    data/reference/FID.CPfilter
+LibRegionFilter:
+    data/reference/LibRegion.CPfilter
+# ====== Environment Configurations =====
+FLASHdir:
+    /home/groups/wjg/kyx
+
+
+
+
