@@ -17,14 +17,14 @@ class FitParams():
         self.param_names = self.func(None, None, return_param_names=True)
         self.x = x
         self.y = y
-        self.fit_kws = fit_kws  # kwargs pairs taat will be passed to fittings.fitSingleCurve
+        self.fit_kws = fit_kws  # kwargs pairs that will be passed to fittings.fitSingleCurve
         self.init_kws = init_kws # dict of {param_name:{'initial':val}} etc
 
         # these operations will be performed before fitting
         # formatted like (param_name, key, operation), e.g. [('fmax', 'initial', lambda y: y.max)]
         self.before_fit_ops = before_fit_ops 
         
-        if x is not None:        
+        if x is not None:
             # go through and get default initiation point for each fit param
             fit_parameters = {}
             for param_name in self.param_names:
@@ -116,10 +116,39 @@ class FitParams():
         # plot the data
         plotting.plt.plot(more_x, self.func(params, more_x), '.--', **kwargs)
     
+    def get_init_dH(self):
+        """
+        Given the range of temperatures and fraction unfolded bounds,
+        find the bounds and initial values for dH
+        """
+        parameters = variables.fittingParametersMelt()
+
+        T_mid = self.x[len(self.x) // 2]
+        lb   = -200 #parameters.find_dH_from_frac_unfolded_and_Tm(frac_unfolded=0.01, Tm=parameters.Tm_lb, temperature=self.x[-1])
+        init = -37 #parameters.find_dH_from_frac_unfolded_and_Tm(frac_unfolded=0.5, Tm=T_mid, temperature=T_mid)
+        ub   = 0 #parameters.find_dH_from_frac_unfolded_and_Tm(frac_unfolded=0.99, Tm=parameters.Tm_ub, temperature=self.x[0])
+        print('dH initial:', {'lowerbound':lb, 'initial':init, 'upperbound':ub, 'vary':True})
+        return {'lowerbound':lb, 'initial':init, 'upperbound':ub, 'vary':True}
+
+
+    def get_init_Tm(self):
+        """
+        Given the range of temperatures and fraction unfolded bounds,
+        find the bounds and initial values for dH
+        """
+        parameters = variables.fittingParametersMelt()
+
+        T_mid = self.x[len(self.x) // 2]
+        lb   = parameters.Tm_lb
+        init = T_mid
+        ub   = parameters.Tm_ub
+        print('Tm initial:', {'lowerbound':lb, 'initial':init, 'upperbound':ub, 'vary':True})
+        return {'lowerbound':lb, 'initial':init, 'upperbound':ub, 'vary':True}
+
         
     def get_init_dG(self):
         """Given the initial concentrations, find an initial dG value."""
-        parameters = variables.fittingParameters()
+        parameters = variables.fittingParametersMelt()
         num_x = len(self.x)
         lb   = parameters.find_dG_from_Kd(parameters.find_Kd_from_frac_bound_concentration(0.99, self.x[0]))
         init = parameters.find_dG_from_Kd(parameters.find_Kd_from_frac_bound_concentration(0.5,  self.x[-1]))
@@ -128,11 +157,30 @@ class FitParams():
         
     def get_init_fmax(self):
         """Find initial fmax values."""
-        return {'lowerbound':0, 'initial':np.nan, 'upperbound':np.inf, 'vary':True}
+        parameters = variables.fittingParametersMelt()
+
+        if hasattr(parameters, 'f_margin'):
+            margin = parameters.f_margin
+            init_fmax = {'lowerbound':1 - margin, 'initial':1, 'upperbound':1 + margin, 'vary':True}
+        else:
+            init_fmax = {'lowerbound':0, 'initial':np.nan, 'upperbound':np.inf, 'vary':True}
+
+        print('Initial Fmax:', init_fmax)
+        return init_fmax
 
     def get_init_fmin(self):
         """Find initial fmin values."""
-        return {'lowerbound':0, 'initial':1E-4, 'upperbound':np.inf, 'vary':True}
+
+        parameters = variables.fittingParametersMelt()
+
+        if hasattr(parameters, 'f_margin'):
+            margin = parameters.f_margin
+            init_fmin = {'lowerbound':-margin, 'initial':0, 'upperbound':margin, 'vary':True}
+        else:
+            init_fmin = {'lowerbound':0, 'initial':1E-4, 'upperbound':np.inf, 'vary':True}
+
+        print('initial Fmin:', init_fmin)
+        return init_fmin
 
     def get_init_dGns(self):
         """Find initial nonspecific dG val values."""

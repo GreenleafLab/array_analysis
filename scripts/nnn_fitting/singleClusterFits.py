@@ -5,7 +5,7 @@ Fits all single clusters.
 
 Input:
 CPsignal file
-*xvalues file
+xvalues file
 
 Output:
 normalized binding series file
@@ -31,7 +31,7 @@ from fittinglibs import (plotting, fitting, fileio, seqfun, distribution, objfun
 ### MAIN ###
 
 ################ Parse input parameters ################
-
+logging.basicConfig(level=logging.DEBUG)
 #set up command line argument parser
 parser = argparse.ArgumentParser(description='fit single clusters to melt curve')
 processing.add_common_args(parser.add_argument_group('common arguments'), required_x=True)
@@ -43,10 +43,6 @@ group.add_argument('--subset_num', default=5000, type=int,
                     help='do at most this many single clusters when the subset flag is true. default=5000')
 
 group = parser.add_argument_group('arguments about fitting function')
-group.add_argument('--use_xvalue_from_header', action='store_true', default=False,
-                   help='if use xvalue from header, parse from the column names of CPseries file')
-group.add_argument('--parse_xvalue_func', type=str, default='get_temperature_from_header_nnnlib2b',
-                  help='Name of the function in fileio to use to parse xvalues if use_xvalue_from_header is true')
 group.add_argument('--func', default = 'melt_curve',
                    help='fitting function. default is "binding_curve", referring to module names in fittinglibs.objfunctions.')
 group.add_argument('--params_name', nargs='+', help='name of param(s) to edit.')
@@ -74,12 +70,12 @@ def splitAndFit(fitParams, meltSeries, numCores, index=None):
     
 def checkFitResults(fitResults):
     # did any of the stde work?
-    param_names = ['fmax', 'dG', 'fmin']
+    param_names = ['fmax', 'dH', 'Tm', 'fmin']
     numClusters = fitResults.dropna(subset=param_names).shape[0]
     logging.info('%4.2f%% clusters have rsq>50%%'
            %(100*(fitResults.rsq > 0.5).sum()/float(numClusters)))
-    logging.info('%4.2f%% clusters have stde in dG < 1'
-           %(100*(fitResults.dG_stde < 1).sum()/float(numClusters)))
+    logging.info('%4.2f%% clusters have stde in dH < 1'
+           %(100*(fitResults.dH_stde < 1).sum()/float(numClusters)))
     logging.info('%4.2f%% clusters have stde in fmax < fmax'
            %(100*(fitResults.fmax_stde < fitResults.fmax).sum()/float(numClusters)))
     logging.info('%4.2f%% clusters have stde != 0 for at least one fit parameters'
@@ -100,10 +96,7 @@ if __name__=="__main__":
     # load files
     logging.info("Loading series...")
     meltSeries = fileio.loadFile(args.binding_series)  
-    if not args.get_xvalue_from_header:
-        xvalues = np.loadtxt(args.xvalues)
-    else:
-        xvalues = getattr(fileio, args.parse_xvalue_func)(meltSeries.columns)
+    xvalues = np.loadtxt(args.xvalues)
         
     min_xval_col = pd.Series(xvalues, index=meltSeries.columns).idxmin()
     

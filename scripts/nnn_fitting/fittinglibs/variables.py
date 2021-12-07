@@ -43,3 +43,31 @@ class fittingParameters():
 
     def find_dG_from_frac_bound(self, frac_bound, concentration):
         return self.find_dG_from_Kd(self.find_Kd_from_frac_bound_concentration(frac_bound, concentration))
+
+class fittingParametersMelt():
+    """
+    Stores parameters and conversion functions for melt curves
+    """
+    def __init__(self) -> None:
+        self.energy_unit = r'kcal\mol'
+        # set to positive as a convenient conversion factor
+        self.absolute_zero = 273.15
+        # Bolzemann constant in kcal/(mol.K)
+        self.kB = 0.0019872
+
+        # bounds for Tm
+        self.Tm_lb = self.find_Kalvin_from_celsius(0)
+        self.Tm_ub = self.find_Kalvin_from_celsius(150)
+
+        # fmin fmax bound margin
+        self.f_margin = 0.25
+
+    def find_celsius_from_Kalvin(self, temperature_K):
+        return temperature_K - self.absolute_zero
+
+    def find_Kalvin_from_celsius(self, temperature_c):
+        return temperature_c + self.absolute_zero
+
+    def find_dH_from_frac_unfolded_and_Tm(self, frac_unfolded, Tm, temperature):
+        dH = self.kB / (1/Tm - 1/temperature) * np.log(1/frac_unfolded - 1)
+        return dH

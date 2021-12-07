@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
 from fittinglibs import fitting
-from fittinglibs.variables import fittingParameters
+from fittinglibs.variables import (fittingParameters, fittingParametersMelt)
 from math import factorial
 import sys
+
+#from scripts.nnn_fitting.fittinglibs.variables import fittingParametersMelt
 
 def rates_off(params, times, data=None, weights=None, index=None, bleach_fraction=1, image_ns=None, return_param_names=False):
     """ Return fit value, residuals, or weighted residuals of off rate objective function. """
@@ -66,6 +68,44 @@ def rates_on(params, times, data=None, weights=None, index=None,  bleach_fractio
     else:
         return ((fracbound - data)*weights)[index]  
         
+
+def melt_curve(params, temperatures, data=None, weights=None, index=None, return_param_names=False):
+    """  
+    Return fit value, residuals, or weighted residuals of a melt curve.
+    Args:
+        params - lmfit `Parameters` object
+    """
+    if return_param_names:
+        return ['fmax', 'dH', 'Tm', 'fmin']
+    
+    if index is None:
+        index = np.ones(len(temperatures)).astype(bool)
+        
+    parameters = fittingParametersMelt()
+    
+    parvals = params.valuesdict()
+    fmax = parvals['fmax']
+    dH   = parvals['dH']
+    Tm   = parvals['Tm']
+    fmin = parvals['fmin']
+
+    # define melt curve function
+    frac_unfolded = (fmin + (fmax - fmin)/
+                 (1 + np.exp((dH/parameters.kB) * (1/Tm - 1/temperatures))))
+    
+    # return fitted curve values from the parameters if data is not given
+    if data is None:
+        return frac_unfolded[index]
+    
+    # return residuals if data is given
+    elif weights is None:
+        return (frac_unfolded - data)[index]
+    
+    # return weighted residuals if both data and weights are given
+    else:
+        return ((frac_unfolded - data) * weights)[index]
+
+
 def binding_curve(params, concentrations, data=None, weights=None, index=None, return_param_names=False):
     """  Return fit value, residuals, or weighted residuals of a binding curve.
     
