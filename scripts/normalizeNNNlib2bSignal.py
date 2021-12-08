@@ -127,10 +127,10 @@ def plot_example_refseqs(refseqs, df, conditions, annotation, cmap, ylim=None):
     ax.set_ylim(ylim)
 
 
-def plot_color_coded_WC_examples(clean_df, annotation, final_norm_conditions, fig_path, n_varaint_to_plot=30):
+def plot_color_coded_WC_examples(clean_df, annotation, final_norm_conditions, fig_path, n_variant_to_plot=30):
     np.random.seed(42)
     cmap = sns.cubehelix_palette(start=1, rot=-.8, reverse=True, as_cmap=True)
-    WC_refseqs = annotation[annotation['Series'] == 'WatsonCrick']['RefSeq'].values[np.random.choice((annotation['Series'] == 'WatsonCrick').sum(), n_varaint_to_plot)]
+    WC_refseqs = annotation[annotation['Series'] == 'WatsonCrick']['RefSeq'].values[np.random.choice((annotation['Series'] == 'WatsonCrick').sum(), n_variant_to_plot)]
     plot_example_refseqs(WC_refseqs, clean_df, final_norm_conditions, annotation, cmap=cmap, ylim=[-.2, 1.2])
     plt.savefig(fig_path, dpi=300, bbox_inches='tight')
 
@@ -149,13 +149,13 @@ if __name__ == '__main__':
         ext = snakemake.params['ext']
     else:
         # Runnig as a test
-        CPseries_file = 'NNNlib2b_DNA_20211022.pkl'
-        mapfile = 'nnnlib2b_map.csv'
-        annotation_file = 'NNNlib2b_annotation_nupack.txt'
+        CPseries_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_DNA_20211022.pkl'
+        mapfile = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\nnnlib2b_map.csv'
+        annotation_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_annotation_nupack.txt'
         green_norm_condition = 'Green07_PostCy3'
-        figdir = '.\\fig\\20211123'
-        out_file = 'NNNlib2b_DNA_20211022_normalized.pkl'
-        xdata_file = 'NNNlib2b_DNA_20211022_xdata.txt'
+        figdir = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\fig\20211123'
+        out_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_DNA_20211022_normalized.pkl'
+        xdata_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_DNA_20211022_xdata.txt'
         ext = '.png'
 
     # Load the data and condition names
@@ -200,10 +200,11 @@ if __name__ == '__main__':
     fig_path = os.path.join(figdir, 'max_min_normalized_curves_01-good_controls' + ext)
     _,_ = get_control_refseq_medians_and_plot(clean_df, long_refseq=good_long_refseq, stem_refseq=good_stem_refseq, conditions=final_norm_conditions, fig_path=fig_path, ylim=[-.2, 1.5])
     fig_path = os.path.join(figdir, 'max_min_normalized_curves_02-example_WC_melt_curves' + ext)
-    plot_color_coded_WC_examples(clean_df, annotation, final_norm_conditions, fig_path, n_varaint_to_plot=40)
+    plot_color_coded_WC_examples(clean_df, annotation, final_norm_conditions, fig_path, n_variant_to_plot=40)
 
     # Save normalized data
-    clean_df[['clusterID'] + final_norm_conditions].set_index('clusterID').to_pickle(out_file)
+    clean_df[['clusterID', 'RefSeq'] + final_norm_conditions].set_index('clusterID').to_pickle(out_file)
+    # clean_df[['clusterID'] + final_norm_conditions].set_index('clusterID').to_pickle(out_file)
     xdata = [get_xdata_from_condition(s) + '\n' for s in green_conditions]
     with open(xdata_file, 'w+') as fh:
         fh.writelines(xdata)

@@ -179,7 +179,7 @@ def fitSingleCurve(x, y, fitParameters, func,
     # do the fit
     results = minimize(func, params,
                        args=(x,),
-                       kws=kwargs, **min_kws)
+                       kws=kwargs, method='least_squares', **min_kws)
 
     
     # find rqs
