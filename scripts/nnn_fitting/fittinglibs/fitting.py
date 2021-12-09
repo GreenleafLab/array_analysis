@@ -512,3 +512,49 @@ def returnResultsFromParams(params, results, y):
     final_params.loc['exit_flag'] = results.ier
     final_params.loc['rmse'] = rmse
     return final_params
+
+
+def fit_single_cluster(y, model, return_type='dict'):
+    """
+    Fit single cluster with minimum constraints.
+    Args:
+        y - signal series
+        T - xdata array, temperatures
+        model - lmfit model object
+        return_type - str. {'dict', 'obj', 'list'}
+    Returns:
+        dict containing best_values + redchi if not return_result_obj
+        lmfit ModelResult obj if True
+    """
+    T = model.T
+    params = model.guess(y, x=T)
+    fit = model.fit(y, params, T=T)
+    
+    if return_type == 'obj':
+        return fit
+    else:
+        result_dict = fit.best_values
+        result_dict.pop('T')
+        for param in fit.params.values():
+            result_dict['%s_stderr'%param.name] = param.stderr
+
+        result_dict['chisqr'] = fit.chisqr
+        result_dict['RMSE'] = np.sqrt(np.nanmean((y - fit.best_fit)**2))
+        if return_type == 'dict':
+            return result_dict
+        elif return_type == 'list':
+            return list(result_dict.values())
+        else:
+            raise 'return_type must be obj, dict or list'
+        
+        
+def fit_single_clusters_in_df(model, series_df, conditions, parallel=False):
+    """
+    Apply the `fit_single_cluster()` to the dataframe
+    """
+    if parallel:
+        fitted_df = series_df[conditions].parallel_apply(lambda y: fit_single_cluster(y, model), axis=1, result_type='expand')
+    else:
+        fitted_df = series_df[conditions].apply(lambda y: fit_single_cluster(y, model), axis=1, result_type='expand')
+    
+    return fitted_df

@@ -14,3 +14,5 @@ scripts/test.py
 *.h5
 cpseriestest.csv
 workspace.code-workspace
+*.ipynb*
+scripts/notebook

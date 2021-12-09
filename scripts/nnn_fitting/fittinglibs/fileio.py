@@ -120,3 +120,14 @@ def get_temperature_from_header_nnnlib2b(columns):
     """
     xvalues = np.array([s.split('_')[1] for s in columns if 'Green' in s], dtype=float)
     return xvalues
+
+def get_conditions_from_mapfile(mapfile, channel):
+    """
+    Args:
+        mapfile - str, file name
+        channel - str, {'green', 'red'}
+    Return:
+        condition_list - List[str]
+    """
+    metadata = pd.read_csv(mapfile)
+    return metadata[metadata['curve_channel'] == channel]['condition'].tolist()
