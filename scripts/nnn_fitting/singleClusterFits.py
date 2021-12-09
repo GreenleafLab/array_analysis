@@ -23,8 +23,8 @@ import argparse
 import sys
 import itertools
 import scipy.stats as st
-from joblib import Parallel, delayed
 import lmfit
+from pandarallel import pandarallel
 import logging
 from fittinglibs.models import MeltCurveModel
 from fittinglibs import (plotting, fitting, fileio, seqfun, distribution, objfunctions, initfits, processing)
@@ -56,31 +56,17 @@ group.add_argument('--subset_num', default=5000, type=int,
 #                    help='if flagged, do not fit, but save the fit parameters')
 
 
-def splitAndFit(model, meltSeries, conditions, numCores, index=None):
-    """ Given a table of binding curves, parallelize fit. """
-    if index is None:
-        index = meltSeries.index
-    logging.info('Fitting curves:')
-    fits = (Parallel(n_jobs=numCores, verbose=10)
-            (delayed(fitting.fit_single_clusters_in_df)(model, meltSeries.loc[idx], conditions)
-             for idx in index))
-    
-    return pd.concat({idx:val for idx, val in zip(index, fits)}).unstack()
-# define functions
-
     
 def checkFitResults(fitResults):
     # did any of the stde work?
     param_names = ['fmax', 'dH', 'Tm', 'fmin']
     numClusters = fitResults.dropna(subset=param_names).shape[0]
-    logging.info('%4.2f%% clusters have rsq>50%%'
-           %(100*(fitResults.rsq > 0.5).sum()/float(numClusters)))
-    logging.info('%4.2f%% clusters have stde in dH < 1'
-           %(100*(fitResults.dH_stde < 1).sum()/float(numClusters)))
+    logging.info('%4.2f%% clusters have stderr in dH < 5'
+           %(100*(fitResults.dH_stderr < 5).sum()/float(numClusters)))
     logging.info('%4.2f%% clusters have stde in fmax < fmax'
-           %(100*(fitResults.fmax_stde < fitResults.fmax).sum()/float(numClusters)))
-    logging.info('%4.2f%% clusters have stde != 0 for at least one fit parameters'
-           %(100 -100*(fitResults.loc[:, ['%s_stde'%param for param in param_names]]==0).all(axis=1).sum()/float(numClusters)))
+           %(100*(fitResults.fmax_stderr < fitResults.fmax).sum()/float(numClusters)))
+    logging.info('%4.2f%% clusters have stderr != 0 for at least one fit parameters'
+           %(100 -100*(fitResults.loc[:, ['%s_stderr'%param for param in param_names]]==0).all(axis=1).sum()/float(numClusters)))
 
 
 if __name__=="__main__":    
@@ -126,4 +112,4 @@ if __name__=="__main__":
     logging.info(f"Saved results to {args.out_file}")
     #fileio.saveFile(fileio.stripExtension(args.out_file)+'.fitParameters.p', fitParams)
     
-    #checkFitResults(fitResults)
+    checkFitResults(fitResults)

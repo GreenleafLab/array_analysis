@@ -43,7 +43,7 @@ rule all:
         #fluor_files
         #config["seriesdir"]
         #datadir + "fluor/Green16_25/NNNlib2b_DNA_tile1_green_600ms_2011.10.22-16.51.13.953.CPfluor" #== Example image quantification ==
-        normalizedSeries
+        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_longer_time.CPfitted.gz"
 
 
 # --- Rules --- #
@@ -321,13 +321,16 @@ rule normalize_signal:
 rule fit_single_cluster:
     input:
         normalized = normalizedSeries,
-        xdata = config["imagingExperiment"] + "_xdata.txt"
+        xdata = datadir + "series_normalized/" + config["imagingExperiment"] + "_xdata.txt",
+        mapfile = config["mapfile"]
     output:
-        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPfitted.gz"
+        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_longer_time.CPfitted.gz"
     threads:
-        12
+        18
     params:
-        cluster_time = "20:00:00",
+        cluster_time = "48:00:00",
         cluster_memory = "32G"
+    conda:
+        "envs/fitting.yml"
     shell:
-        "python scripts/nnn_fitting/singleClusterFits.py -b {input.normalized} -x {input.xdata} -o {output} --func melt_curve"
+        "python scripts/nnn_fitting/singleClusterFits.py -b {input.normalized} -x {input.xdata} -o {output} --mapfile {input.mapfile}"
