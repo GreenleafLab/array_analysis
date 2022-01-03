@@ -16,3 +16,5 @@ cpseriestest.csv
 workspace.code-workspace
 *.ipynb*
 scripts/notebook
+test.*
+_README*

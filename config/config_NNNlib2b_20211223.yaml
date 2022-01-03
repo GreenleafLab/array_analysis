@@ -41,29 +41,29 @@ imagingExperiment:
     NNNlib2b_DNA
 tifdir:
     # directory holding all tif images, with a trailing slash
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/images_20211221/
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/images_20211223/
 fluordir:
     # output directory for CPfluor files, with a trailing slash
     # recommemded: {datadir}/fluor/
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/fluor_20211221/
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/fluor_20211223/
 seriesdir:
     # output directory for CPseries files, with a trailing slash
     # recommended: {datadir}/series/
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series_20211221/
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series_20211223/
 seriesfile:
     # A big merged signal file with all the tiles from `seriesdir`
     # either .pkl or .h5
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series_merged_20211221/NNNlib2b_DNA_20211221.pkl
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series_merged_20211223/NNNlib2b_DNA_20211223.pkl
 mapfile:
     # a csv file with column `condition`
-    config/nnnlib2b_20211221_map.csv
+    config/nnnlib2b_20211223_map.csv
 greenNormCondition:
     Green07_Cy3
+# ====== Environment Configurations =====
 FIDfilter:
     data/reference/FID.CPfilter
 LibRegionFilter:
     data/reference/LibRegion.CPfilter
-# ====== Environment Configurations =====
 FLASHdir:
     /home/groups/wjg/kyx
 

@@ -2,7 +2,7 @@ import os
 from scripts.util import *
 
 ####### SELECT CONFIG FILE HERE #######
-configfile: "config/config_NNNlib2b_20211022.yaml"
+configfile: "config/config_NNNlib2b_20211216.yaml"
 #######################################
 
 # --- Define Global Variables --- #
@@ -24,7 +24,9 @@ if config["processingType"] == "pre-array":
                         expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES)]
 elif config["processingType"] == "post-array":
     fluor_files = get_fluor_names_from_mapfile(config["mapfile"], config["tifdir"], config["fluordir"])
-    requested_output = config["seriesdir"]#[fluor_files, config["seriesdir"]]
+    requested_output = config["seriesfile"]#fluor_files + [config["seriesdir"]]
+    # with open('test.txt', 'w+') as fh:
+    #     fh.writelines([l + '\n' for l in requested_output])
     
     if config["fitting"] == "NNN":
         requested_output.append(normalizedSeries)
@@ -35,15 +37,11 @@ elif config["processingType"] == "post-array":
 
 rule all:
     input:
-        # requested_output
-        #"%s_STATS.csv" % sequencingResult.strip('.CPseq'),
+        requested_output
         #config["sequencingResult"]#, #== Align sequencing data ==
         #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES) #== Plot fiducials ==
         #expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES), #== Filtered libregions ==
-        #fluor_files
-        #config["seriesdir"]
-        #datadir + "fluor/Green16_25/NNNlib2b_DNA_tile1_green_600ms_2011.10.22-16.51.13.953.CPfluor" #== Example image quantification ==
-        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_longer_time.CPfitted.gz"
+        #datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_parallel.CPfitted.gz"
 
 
 # --- Rules --- #
@@ -235,7 +233,7 @@ rule quantify_images:
         image = config["tifdir"] + "{condition}/%s_{tile}_{channel}_600ms_{timestamp}.tif" % config["experimentName"],
         libregion = expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES)
     output:
-        CPfluor = datadir + "fluor/{condition}/%s_{tile}_{channel}_600ms_{timestamp}.CPfluor" % config["experimentName"]#,
+        CPfluor = config["fluordir"] + "{condition}/%s_{tile}_{channel}_600ms_{timestamp}.CPfluor" % config["experimentName"]#,
         #roff = expand(datadir + "roff/{condition}/%s_{tile}_{channel}_600ms_{timestamp}.roff")
     params:
         image_dir = config["tifdir"] + "{condition}/",
@@ -283,10 +281,11 @@ rule combine_signal:
     input:
         fluorfiles = fluor_files,
         oldmapfile = datadir + 'tmp/' + config["experimentName"] + '.map',
-        libdata = config["sequencingResult"]
+        libdata = datadir + 'aligned/' + config["sequencingResult"]
     output:
-        directory(config["seriesdir"])
+        get_series_tile_filenames(config["seriesdir"], config["imagingExperiment"])
     params:
+        output_directory = directory(config["seriesdir"]),
         cluster_memory = "80G",
         cluster_time = "10:00:00",
         num_cores = "6"
@@ -296,7 +295,21 @@ rule combine_signal:
         "envs/py36.yml"
     shell:
         """
-        python scripts/array_tools/bin_py3/processData.py -mf {input.oldmapfile} -od {output} --appendLibData {input.libdata} --num_cores {params.num_cores}
+        python scripts/array_tools/bin_py3/processData.py -mf {input.oldmapfile} -od {params.output_directory} --appendLibData {input.libdata} --num_cores {params.num_cores}
+        """
+
+## concat_tiles_signal: Concatenate one CPseries file per tile into one big CPseries file with all tiles
+rule concat_tiles_signal:
+    input:
+        series = get_series_tile_filenames(config["seriesdir"], config["imagingExperiment"]),
+        mapfile = config["mapfile"]
+    output:
+        config["seriesfile"]
+    conda:
+        "envs/py36.yml"
+    shell:
+        """
+        python scripts/concatTilesSignal.py --tiles {input.series} -o {output} -m {input.mapfile}
         """
 
 ## normalize_signal: Given one merged CPseq file, normalize fluorescence signal for single cluster fit
@@ -307,10 +320,10 @@ rule normalize_signal:
         annotation = config["referenceLibrary"]
     output:
         figdir = expdir + "fig/normalization",
-        out_file = config["imagingExperiment"] + "_normalized.pkl",
+        out_file = datadir + config["imagingExperiment"] + "_normalized.pkl",
         xdata_file = config["imagingExperiment"] + "_xdata.txt"
     params:
-        green_norm_condition = "Green07_PostCy3",
+        green_norm_condition = config["greenNormCondition"],
         ext = ".pdf"
     threads:
         1
@@ -324,7 +337,7 @@ rule fit_single_cluster:
         xdata = datadir + "series_normalized/" + config["imagingExperiment"] + "_xdata.txt",
         mapfile = config["mapfile"]
     output:
-        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_longer_time.CPfitted.gz"
+        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_parallel.CPfitted.gz"
     threads:
         18
     params:
@@ -333,4 +346,4 @@ rule fit_single_cluster:
     conda:
         "envs/fitting.yml"
     shell:
-        "python scripts/nnn_fitting/singleClusterFits.py -b {input.normalized} -x {input.xdata} -o {output} --mapfile {input.mapfile}"
+        "python scripts/nnn_fitting/singleClusterFits.py --parallel -b {input.normalized} -x {input.xdata} -o {output} --mapfile {input.mapfile}"

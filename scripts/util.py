@@ -1,48 +1,20 @@
 import os
 import pandas as pd
 
-def get_series_tile_filenames(seriesdir):
+def get_series_tile_filenames(seriesdir, imagingExperiment):
     """
+    Args:
+        imagingExperiment - str
     Returns:
         tile_names - List[str]
     """
-    tile_names = []
+    # tile_ext = '.json.csv'
+    # tile_names = [s for s in os.listdir(seriesdir) if s.endswith(tile_ext)]
+    # assert len(tile_names) == 18, 'Number of tiles must be 18, check your seriesdir %s' % seriesdir
+    
+    # return tile_names.sort()
+    tile_names = [f'{seriesdir}CPseries/{imagingExperiment}_tile{tile}_focused_green_2_600ms.CPseries.json.csv' for tile in range(1,19)]
     return tile_names
-
-
-def write_to_hdf5(experiment_nm, series_tile=[], h5nm=None, clean=True):
-    """
-    Args:
-        experiment_nm - str, e.g. 'NNNlib2b_DNA'
-        series_tile - List[str], list of CPseries file names
-        h5nm - str, output file name
-        clean - bool, whether to drop all nan and duplicate clusters
-    """
-    if h5nm is None:
-        if not clean:
-            h5nm = experiment_nm + '.h5'
-        else:
-            h5nm = experiment_nm + '_clean.h5'
-        
-    with pd.HDFStore(h5nm) as h5:
-        for i in range(1,19):
-            print('Reading tile %03d' % i)
-            tile = pd.read_csv(series_tile[i])
-            
-            if clean:
-                # drop clusters that only have NaNs
-                # drop non-unique clusters
-                tile.dropna(how='all', subset=conditions, inplace=True)
-                tile.drop_duplicates(subset='clusterID', keep=False, ignore_index=True, inplace=True)
-            
-            if i == 1:
-                h5.put('signal', tile, format='table', data_columns=True)
-            else:
-                h5.append('signal', tile, format='table', data_columns=True)
-                
-            print('Wrote tile %03d\n' % i)
-                
-    print('Wrote to hdf5 file %s' % h5nm)
 
 
 def convert_hdf5_to_pickle(hdf5_file, pickle_file, drop_duplicate=True):
@@ -64,6 +36,9 @@ def get_fluor_names_from_mapfile(mapfile, tifdir, fluordir):
     Returns:
         fluor_names - List[str]
     """
+    def strip_tif(fn):
+        return fn[:-4]
+
     df = pd.read_csv(mapfile)
     
     fluor_names = []
@@ -75,7 +50,7 @@ def get_fluor_names_from_mapfile(mapfile, tifdir, fluordir):
             print("\nCannot find tif file for %s" % condition)
             print(os.listdir(tif_condition_dir))
 
-        fluor_names.append(os.path.join(fluordir, condition, tif_fn.strip('.tif') + '.CPfluor'))
+        fluor_names.append(os.path.join(fluordir, condition, strip_tif(tif_fn) + '.CPfluor'))
 
     return fluor_names
 
@@ -115,6 +90,7 @@ def write_old_mapfile_from_fluordir(fluordir, outfile):
         fh.writelines(lines)
     
     print('Wrote to %s' % outfile)
+
 
 def fill_sample_sheet(mapfile):
     """
@@ -179,3 +155,4 @@ def parse_fluorfiles_from_mapfile(mapfile):
 #datadir = r'/scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/'
 #fluor_names = get_fluor_names_from_mapfile(r'config/nnnlib2b_map.csv', fluordir=datadir+'fluor/', tifdir = datadir+'images/')
 #print(fluor_names)
+#print(get_series_tile_filenames('/series/', 'NNNlib2b_DNA'))

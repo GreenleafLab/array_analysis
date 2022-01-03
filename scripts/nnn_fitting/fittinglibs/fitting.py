@@ -364,11 +364,11 @@ def bootstrapCurves(x, subSeries, fitParameters, fmaxDist, func,
     results.loc['flag'] = enforce_fmax
     return results, singles
 
-def findRsq(x, y, params, func):
+def findRsq(y, fit_result):
     """find rsq of a fit."""
     ss_total = np.sum((y - y.mean())**2)
-    ss_error = np.sum((y - func(params, x))**2)
-    return 1-ss_error/ss_total
+    ss_error = np.sum((y - fitResult.eval())**2)
+    return 1 - ss_error/ss_total
 
 
 def findProcessedSingles(singles, param_names):
@@ -538,8 +538,10 @@ def fit_single_cluster(y, model, return_type='dict'):
         for param in fit.params.values():
             result_dict['%s_stderr'%param.name] = param.stderr
 
-        result_dict['chisqr'] = fit.chisqr
+        #result_dict['chisqr'] = fit.chisqr
         result_dict['RMSE'] = np.sqrt(np.nanmean((y - fit.best_fit)**2))
+        result_dict['rsqr'] = findRsq(y, fit)
+        
         if return_type == 'dict':
             return result_dict
         elif return_type == 'list':

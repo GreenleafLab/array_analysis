@@ -238,6 +238,15 @@ You will get:
 - CPseq file aligned to the designed library and an aggregated STATS report
 - TODO: Add QC plots of the sequencing results to the workflow
 
+
+### Imaging data processing
+
+Note: array data tif files should have the same prefix, i.e. experiment name like `NNNlib2b_DNA`, for snakemake to match the filenames successfully.
+
+1. In the config file, modify `processingType` to `post-array`.
+
+2. If you need to tune the global variables for registration, the file is located at `scripts/array_tools/GlobalVars.m`. Common parameters to play with includes `correlationSuccessPeakHeight`, `maxOffsetGlobalRegistration`, and `scalingFactor`.
+
 ## Run it
 
 Run with `-np` for a dry run. Snakemake will print out the commands to execute.
