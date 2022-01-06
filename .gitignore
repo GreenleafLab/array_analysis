@@ -18,3 +18,4 @@ workspace.code-workspace
 scripts/notebook
 test.*
 _README*
+*DS_Store

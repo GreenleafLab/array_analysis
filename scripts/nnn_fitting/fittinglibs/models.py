@@ -25,12 +25,13 @@ class MeltCurveModel(lmfit.Model):
         params = self.make_params()
         def pset(param, value, minimum=-np.inf, maximum=np.inf):
             params["%s%s" % (self.prefix, param)].set(value=value, min=minimum, max=maximum)
+
         pset("fmin", 0, minimum=-self.f_margin, maximum=self.f_margin)
         pset("fmax", 1, minimum=1-self.f_margin, maximum=1+self.f_margin)
         if 'dH' in kwargs.keys():
-            pset("dH", kwargs["dH"])
+            pset("dH", kwargs["dH"], maximum=0)
         else:
-            pset("dH", -40)
+            pset("dH", -40, maximum=0)
             
         if 'Tm' in kwargs.keys():
             pset("Tm", kwargs["Tm"])

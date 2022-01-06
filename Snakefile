@@ -2,7 +2,7 @@ import os
 from scripts.util import *
 
 ####### SELECT CONFIG FILE HERE #######
-configfile: "config/config_NNNlib2b_20211216.yaml"
+configfile: "config/config_NNNlib2b_20211022.yaml"
 #######################################
 
 # --- Define Global Variables --- #
@@ -37,11 +37,11 @@ elif config["processingType"] == "post-array":
 
 rule all:
     input:
-        requested_output
+        #requested_output
         #config["sequencingResult"]#, #== Align sequencing data ==
         #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES) #== Plot fiducials ==
         #expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES), #== Filtered libregions ==
-        #datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_parallel.CPfitted.gz"
+        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPvariant"
 
 
 # --- Rules --- #
@@ -283,7 +283,7 @@ rule combine_signal:
         oldmapfile = datadir + 'tmp/' + config["experimentName"] + '.map',
         libdata = datadir + 'aligned/' + config["sequencingResult"]
     output:
-        get_series_tile_filenames(config["seriesdir"], config["imagingExperiment"])
+        get_series_tile_filenames(config["seriesdir"], config["prefix"])
     params:
         output_directory = directory(config["seriesdir"]),
         cluster_memory = "80G",
@@ -301,7 +301,7 @@ rule combine_signal:
 ## concat_tiles_signal: Concatenate one CPseries file per tile into one big CPseries file with all tiles
 rule concat_tiles_signal:
     input:
-        series = get_series_tile_filenames(config["seriesdir"], config["imagingExperiment"]),
+        series = get_series_tile_filenames(config["seriesdir"], config["prefix"]),
         mapfile = config["mapfile"]
     output:
         config["seriesfile"]
@@ -337,7 +337,7 @@ rule fit_single_cluster:
         xdata = datadir + "series_normalized/" + config["imagingExperiment"] + "_xdata.txt",
         mapfile = config["mapfile"]
     output:
-        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_parallel.CPfitted.gz"
+        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPfitted.gz"
     threads:
         18
     params:
@@ -347,3 +347,22 @@ rule fit_single_cluster:
         "envs/fitting.yml"
     shell:
         "python scripts/nnn_fitting/singleClusterFits.py --parallel -b {input.normalized} -x {input.xdata} -o {output} --mapfile {input.mapfile}"
+
+## bootstrap_variant_median
+rule bootstrap_variant_median:
+    input:
+        cf = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPfitted.gz",
+        annotation = config["sequencingResult"]
+    params:
+        p = "dH Tm",
+        n_samples = "1000",
+        cluster_time = "02:00:00",
+        cluster_memory = "8G"
+    output:
+        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPvariant"
+    threads:
+        20
+    conda:
+        "envs/fitting.yml"
+    shell:
+        "python scripts/nnn_fitting/bootStrapFitFile.py -cf {input.cf} -a {input.annotation} -p {params.p} --n_samples {params.n_samples}"

@@ -40,7 +40,14 @@ alignBeam:
     0
 # --- Begin post-array config with imaging data ---
 imagingExperiment:
+    # unique name for the array experiment
+    # use this to distinguish multiple array experiments on the same chip
+    # usually use the date of the experiment
     NNNlib2b_DNA_20211022
+prefix:
+    # prefix to the tif files 
+    # format: {prefix}_tile{tile}_focused_green_2_600ms.tif
+    NNNlib2b_DNA
 tifdir:
     # directory holding all tif images, with a trailing slash
     /scratch/groups/wjg/kyx/NNNlib2b_Oct6/data/images_20211022/
@@ -58,6 +65,8 @@ seriesfile:
 mapfile:
     # a csv file with column `condition`
     config/nnnlib2b_map.csv
+greenNormCondition:
+    Green07_PostCy3
 FIDfilter:
     data/reference/FID.CPfilter
 LibRegionFilter:

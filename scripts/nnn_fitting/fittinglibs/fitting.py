@@ -367,7 +367,7 @@ def bootstrapCurves(x, subSeries, fitParameters, fmaxDist, func,
 def findRsq(y, fit_result):
     """find rsq of a fit."""
     ss_total = np.sum((y - y.mean())**2)
-    ss_error = np.sum((y - fitResult.eval())**2)
+    ss_error = np.sum((y - fit_result.eval())**2)
     return 1 - ss_error/ss_total
 
 

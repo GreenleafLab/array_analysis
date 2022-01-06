@@ -1,10 +1,10 @@
 import os
 import pandas as pd
 
-def get_series_tile_filenames(seriesdir, imagingExperiment):
+def get_series_tile_filenames(seriesdir, prefix):
     """
     Args:
-        imagingExperiment - str
+        prefix - str
     Returns:
         tile_names - List[str]
     """
@@ -13,7 +13,7 @@ def get_series_tile_filenames(seriesdir, imagingExperiment):
     # assert len(tile_names) == 18, 'Number of tiles must be 18, check your seriesdir %s' % seriesdir
     
     # return tile_names.sort()
-    tile_names = [f'{seriesdir}CPseries/{imagingExperiment}_tile{tile}_focused_green_2_600ms.CPseries.json.csv' for tile in range(1,19)]
+    tile_names = [f'{seriesdir}CPseries/{prefix}_tile{tile}_focused_green_2_600ms.CPseries.json.csv' for tile in range(1,19)]
     return tile_names
 
 

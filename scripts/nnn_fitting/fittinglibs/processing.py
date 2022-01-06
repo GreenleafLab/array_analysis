@@ -395,8 +395,14 @@ def filterFitParameters2(table):
 def filterVariant(table):
     return table.loc[(table.pvalue < 0.01)&(table.dG < -10.7)].copy()
 
-def findVariantTable(table, test_stats, min_fraction_fit=0.25, filterFunction=filterFitParameters):
-    """ Find per-variant information from single cluster fits. """
+def findVariantTable(table, test_stats, variant_col='SEQID', min_fraction_fit=0.25, filterFunction=filterFitParameters):
+    """ Make a variant table. Find per-variant information from single cluster fits.
+    Test the number of success.
+    Args:
+        table - single cluster fit results annotated with variant information
+        variant_col - str, name of the col for variant annotation
+        filter_function - function for filtering single cluster fits 
+    """
     
     # define columns as all the ones between variant number and fraction consensus
     test_stats_init = ['%s_init'%param for param in test_stats]
@@ -405,24 +411,25 @@ def findVariantTable(table, test_stats, min_fraction_fit=0.25, filterFunction=fi
 
     other_cols = (['numTests', 'fitFraction', 'pvalue', 'numClusters'] +
         list(itertools.chain(*[i for i in zip(test_stats_lb, test_stats, test_stats_ub)])) +
-        ['rsq', 'numIter', 'flag'])
+        ['rsqr', 'numIter', 'flag'])
     
-    table.dropna(subset=['variant_number'], axis=0, inplace=True)
-    grouped = table.groupby('variant_number')
+    table.dropna(subset=[variant_col], axis=0, inplace=True)
+    grouped = table.groupby(variant_col)
     variant_table = pd.DataFrame(index=grouped.first().index,
                                  columns=test_stats_init+other_cols)
     
     # filter for nan, barcode, and fit
+    # calculate fit fraction and store in variant table
     variant_table.loc[:, 'numTests'] = grouped.size()
     
     fitFilteredTable = filterFunction(table)
-    fitFilterGrouped = fitFilteredTable.groupby('variant_number')
+    fitFilterGrouped = fitFilteredTable.groupby(variant_col)
     index = variant_table.loc[:, 'numTests'] > 0
     
     variant_table.loc[index, 'fitFraction'] = (fitFilterGrouped.size().loc[index]/
                                            variant_table.loc[index, 'numTests'])
     variant_table.loc[index, 'fitFraction'].fillna(0)
-    # then save parameters
+    # then save parameters. this is median without filtering single clusters
     old_test_stats = grouped.median().loc[:, test_stats]
     old_test_stats.columns = test_stats_init
     variant_table.loc[:, test_stats_init] = old_test_stats
@@ -430,11 +437,14 @@ def findVariantTable(table, test_stats, min_fraction_fit=0.25, filterFunction=fi
     # null model is that all the fits are bad. 
     for n in np.unique(variant_table.loc[:, 'numTests'].dropna()):
         # do one tailed t test
+        # x is the number of succeed, k
         x = (variant_table.loc[:, 'fitFraction']*
              variant_table.loc[:, 'numTests']).loc[variant_table.numTests==n].dropna().astype(float)
+        # sf(k, n, p): survival function, 1 - cdf
         variant_table.loc[x.index, 'pvalue'] = st.binom.sf(x-1, n, min_fraction_fit)
     
     return variant_table
+    
     
 def findPvalueFitFraction(fitFraction, numTests, min_fraction_fit=0.25):
     """For specified fit fraction and num tests, find the pvalue."""

@@ -1,0 +1,22 @@
+name: py38
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - numpy
+  - pandas
+  - matplotlib
+  - seaborn
+  - plotly
+  - scipy
+  - joblib
+  - biopython
+  - statsmodels
+  - lmfit
+  - pandarallel
+  - pytables
+  - pip:
+    - tqdm
+    - scikits.bootstrap
+    - nwalign3

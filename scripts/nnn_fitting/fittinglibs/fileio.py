@@ -53,7 +53,10 @@ def loadFile(filename):
     
     elif ext == '.times':
         return _loadTextFile(filename)
-
+    elif ext == '.tsv':
+        return pd.read_csv(filename, sep='\t')
+    elif ext == '.csv':
+        return pd.read_csv(filename, sep=',')
     else:
         print(('Extension %s not recognized. No file loaded.'%ext))
         
