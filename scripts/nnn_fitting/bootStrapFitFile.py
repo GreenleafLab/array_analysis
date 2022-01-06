@@ -34,6 +34,8 @@ parser.add_argument('-a', '--annotated_clusters', metavar=".CPannot.pkl",
 group = parser.add_argument_group('additional option arguments')
 group.add_argument('-out', '--out_file', 
                    help='output filename. default is basename of CPfitted filename')
+group.add_argument('-g', '--good_cluster_index',
+                   help='output file for cluster indeces that are considered good, default to basename of CPfitted + good_cluster_ind.txt')
 group.add_argument('--n_samples', default=1000, type=int, metavar="N",
                    help='number of times to bootstrap samples. default = 1000.')
 group.add_argument('-n', '--numCores', default=20, type=int, metavar="N",
@@ -73,13 +75,16 @@ def findPerVariantInfo(annotated_results, param_name, variant_col='SEQID'):
     return variant_table
 
 
-def findBootstrappedVariantInfo(annotated_results, variant_table, param_name, n_samples=1000, variant_col='SEQID'):
+def findBootstrappedVariantInfo(annotated_results, variant_table, param_name, n_samples=1000, variant_col='SEQID', filter_fits=False):
     """
     Group results by variant number and bootstrap param_name, fmin, and fmax.
     """
+    # filter single clusters
+    if filter_fits:
+        annotated_results = filterFits(annotated_results)
+
     # group by variant number
     grouped = annotated_results.groupby(variant_col)
-    #print(grouped.groups)
     groupDict = {}
     for name, group in grouped:
         groupDict[name] = group
@@ -105,6 +110,7 @@ if __name__ == '__main__':
     # load files
     args = parser.parse_args()
     outFile = args.out_file
+    clusterIndexFile = args.good_cluster_index
     fittedBindingFilename = args.single_cluster_fits
     annotatedClusterFile  = args.annotated_clusters
 
@@ -119,6 +125,8 @@ if __name__ == '__main__':
     # find out file
     if outFile is None:
         outFile = fileio.stripExtension(args.single_cluster_fits)
+    if clusterIndexFile is None:
+        clusterIndexFile = fileio.stripExtension(args.single_cluster_fits) + '_good_cluster_ind.txt'
 
     # load data
     print('Loading data..')
@@ -131,10 +139,9 @@ if __name__ == '__main__':
     
     # load annotations
     try:
-        # annotated_clusters = fileio.loadFile(annotatedClusterFile)[['clusterID', 'SEQID']]
-        annotated_clusters = pd.read_table(annotatedClusterFile)[['clusterID', 'RefSeq']]
+        annotated_clusters = pd.read_table(annotatedClusterFile)[['clusterID', variant_col]]
     except:
-        print("Check if ['clusterID', 'SEQID'] are in the header of the annotated cluster file %s"%annotatedClusterFile)
+        print("Check if ['clusterID', %s] are in the header of the annotated cluster file %s" % (variant_col, annotatedClusterFile))
 
     # load annotations for bootstrapping
     annotated_results = pd.merge(left=annotated_clusters, right=cluster_data, on='clusterID').dropna(subset=annotated_clusters.columns.tolist() + param).set_index('clusterID')
@@ -143,7 +150,12 @@ if __name__ == '__main__':
     # save
     variant_table = findPerVariantInfo(annotated_results, param + ['fmax', 'fmin'], variant_col=variant_col)
     print('Found per variant info')
-    variant_table = findBootstrappedVariantInfo(annotated_results, variant_table, param, n_samples=n_samples, variant_col=variant_col)
+
+    variant_table = findBootstrappedVariantInfo(annotated_results, variant_table, param, n_samples=n_samples, variant_col=variant_col, filter_fits=True)
     print('Finished bootstrapping')
+
     variant_table.to_csv(outFile + '.CPvariant', sep='\t')
-    print('Saved to CPvariant file')
+    good_ind = filterFits(annotated_results).index.tolist()
+    with open(clusterIndexFile, 'w') as fh:
+        fh.writelines([l+'\n' for l in good_ind])
+    print('Saved to CPvariant file and good cluster index file')

@@ -9,7 +9,7 @@ configfile: "config/config_NNNlib2b_20211022.yaml"
 
 datadir = config['datadir']
 expdir = os.path.normpath(datadir + '/../') + '/'
-sequencingResult = datadir + 'aligned/' + config["sequencingResult"]
+sequencingResult = config["sequencingResult"]
 normalizedSeries = datadir + "series_normalized/" + config["imagingExperiment"] + "_normalized.pkl"
 
 # hardcoded tile numbers
@@ -40,8 +40,8 @@ rule all:
         #requested_output
         #config["sequencingResult"]#, #== Align sequencing data ==
         #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES) #== Plot fiducials ==
-        #expand(datadir + "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq", tile=TILES), #== Filtered libregions ==
-        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPvariant"
+        #datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_good_cluster_ind.txt"
+        get_series_tile_filenames(config["seriesdir"], config["prefix"])
 
 
 # --- Rules --- #
@@ -84,6 +84,8 @@ rule convert_FLASH_to_CPseq:
         datadir + "FLASH_output/out.extendedFrags.fastq"
     output:
         datadir + "paired_reads/ConsensusPairedReads.CPseq"
+    params:
+        cluster_memory = "16G"
     threads:
         1
     conda:
@@ -149,7 +151,6 @@ rule split_CPseq:
     input:
         datadir + "sequence/ALL.CPseq"
     output:
-        #directory(datadir + "tiles/")
         expand(datadir + "tiles/ALL_{tile}_Bottom.CPseq", tile=TILES)
     threads:
         1
@@ -281,7 +282,7 @@ rule combine_signal:
     input:
         fluorfiles = fluor_files,
         oldmapfile = datadir + 'tmp/' + config["experimentName"] + '.map',
-        libdata = datadir + 'aligned/' + config["sequencingResult"]
+        libdata = sequencingResult
     output:
         get_series_tile_filenames(config["seriesdir"], config["prefix"])
     params:
@@ -352,17 +353,18 @@ rule fit_single_cluster:
 rule bootstrap_variant_median:
     input:
         cf = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPfitted.gz",
-        annotation = config["sequencingResult"]
+        annotation = sequencingResult
     params:
         p = "dH Tm",
         n_samples = "1000",
         cluster_time = "02:00:00",
         cluster_memory = "8G"
     output:
-        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPvariant"
+        variant = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPvariant",
+        good_clusters = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_good_cluster_ind.txt"
     threads:
         20
     conda:
         "envs/fitting.yml"
     shell:
-        "python scripts/nnn_fitting/bootStrapFitFile.py -cf {input.cf} -a {input.annotation} -p {params.p} --n_samples {params.n_samples}"
+        "python scripts/nnn_fitting/bootStrapFitFile.py -cf {input.cf} -a {input.annotation} -p {params.p} --n_samples {params.n_samples} -g {output.good_clusters}"
