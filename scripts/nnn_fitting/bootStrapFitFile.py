@@ -30,7 +30,8 @@ parser.add_argument('-p', '--param', nargs='+', default='dH Tm', metavar="dH Tm"
                    help='param to bootstrap, excluding fmax and fmin. Default is "dH Tm"')
 parser.add_argument('-a', '--annotated_clusters', metavar=".CPannot.pkl",
                    help='file with clusters annotated by variant number')
-
+parser.add_argument('--query', help='query string to filter good fit single clusters')
+parser.add_argument('-vc', '--variant_col', default='SEQID', help='Name of the column to aggregate the clusters on')
 group = parser.add_argument_group('additional option arguments')
 group.add_argument('-out', '--out_file', 
                    help='output filename. default is basename of CPfitted filename')
@@ -42,12 +43,11 @@ group.add_argument('-n', '--numCores', default=20, type=int, metavar="N",
                    help='number of cores. default = 20')
  
 
-def filterFits(table):
+def filterGoodFits(table, query):
     """
     Filter single cluster fits.
     Defines the criterion for a success cluster
     """
-    query = "rsqr > 0.5 & fmin > -1 & fmin < 2 & fmin_stderr < fmin + 1 & fmax > 0 & fmax < 3 & fmax_stderr < fmax & Tm_stderr < 10 & dH_stderr < 100"
     return table.query(query)
 
 def bootstrapErrors(params, group, name, n_samples):
@@ -66,7 +66,7 @@ def bootstrapErrors(params, group, name, n_samples):
         allbounds[param+'_ub'] = bounds[1]
     return pd.Series(allbounds, name=name)
 
-def findPerVariantInfo(annotated_results, param_name, variant_col='SEQID'):
+def findPerVariantInfo(annotated_results, param_name, filterFits, variant_col='SEQID'):
     """ Group results by variant number and find median param_name, fmin, and fmax. """
     variant_table = processing.findVariantTable(annotated_results,
                                                   test_stats=param_name,
@@ -75,7 +75,7 @@ def findPerVariantInfo(annotated_results, param_name, variant_col='SEQID'):
     return variant_table
 
 
-def findBootstrappedVariantInfo(annotated_results, variant_table, param_name, n_samples=1000, variant_col='SEQID', filter_fits=False):
+def findBootstrappedVariantInfo(annotated_results, variant_table, param_name, filterFits, n_samples=1000, variant_col='SEQID', filter_fits=False):
     """
     Group results by variant number and bootstrap param_name, fmin, and fmax.
     """
@@ -120,7 +120,9 @@ if __name__ == '__main__':
     
     # Name of the column to group clusters on
     # Might change according to your library file format
-    variant_col = 'RefSeq'
+    variant_col = args.variant_col
+
+    filterFits = lambda table: filterGoodFits(table, args.query)
 
     # find out file
     if outFile is None:
@@ -148,10 +150,10 @@ if __name__ == '__main__':
     print('Clusters annotated')
 
     # save
-    variant_table = findPerVariantInfo(annotated_results, param + ['fmax', 'fmin'], variant_col=variant_col)
+    variant_table = findPerVariantInfo(annotated_results, param + ['fmax', 'fmin'], filterFits, variant_col=variant_col)
     print('Found per variant info')
 
-    variant_table = findBootstrappedVariantInfo(annotated_results, variant_table, param, n_samples=n_samples, variant_col=variant_col, filter_fits=True)
+    variant_table = findBootstrappedVariantInfo(annotated_results, variant_table, param, filterFits, n_samples=n_samples, variant_col=variant_col, filter_fits=True)
     print('Finished bootstrapping')
 
     variant_table.to_csv(outFile + '.CPvariant', sep='\t')

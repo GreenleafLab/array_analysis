@@ -38,6 +38,10 @@ alignBeam:
     # if there is no exact match
     # if set to 0 or 1, only allow exact match
     0
+FIDfilter:
+    data/reference/FID.CPfilter
+LibRegionFilter:
+    data/reference/LibRegion.CPfilter
 # --- Begin post-array config with imaging data ---
 imagingExperiment:
     # unique name for the array experiment
@@ -47,6 +51,7 @@ imagingExperiment:
 prefix:
     # prefix to the tif files 
     # format: {prefix}_tile{tile}_focused_green_2_600ms.tif
+    # {prefix}_tile{tile}_green_2_600ms_{timestamp}.CPfluor [! no "focused"]
     NNNlib2b_DNA
 tifdir:
     # directory holding all tif images, with a trailing slash
@@ -65,16 +70,19 @@ seriesfile:
 mapfile:
     # a csv file with column `condition`
     config/nnnlib2b_map.csv
+# ------ Begin NNN fitting config ------
 greenNormCondition:
     Green07_PostCy3
-FIDfilter:
-    data/reference/FID.CPfilter
-LibRegionFilter:
-    data/reference/LibRegion.CPfilter
+variantCol:
+    SEQID
+query:
+    # query strings to filter for good fits
+    singleCluster:
+        'rsqr > 0.5 & fmin > -1 & fmin < 2 & fmin_stderr < fmin + 1 & fmax > 0 & fmax < 3 & fmax_stderr < fmax & Tm_stderr < 10 & dH_stderr < 100'
+    fmaxVariant:
+        'rsqr > 0.5 & fmin_init > -1 & fmin_init < 2 & fmax_init > 0 & fmax_init < 2 & dH_init > -400'
+    fminVariant:
+        'rsqr > 0.5 & fmin_init > -1 & fmin_init < 2 & fmax_init > 0 & fmax_init < 2 & dH_init > -400'
 # ====== Environment Configurations =====
 FLASHdir:
     /home/groups/wjg/kyx
-
-
-
-

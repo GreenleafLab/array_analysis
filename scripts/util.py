@@ -13,7 +13,7 @@ def get_series_tile_filenames(seriesdir, prefix):
     # assert len(tile_names) == 18, 'Number of tiles must be 18, check your seriesdir %s' % seriesdir
     
     # return tile_names.sort()
-    tile_names = [f'{seriesdir}CPseries/{prefix}_tile{tile}_focused_green_2_600ms.CPseries.json.csv' for tile in range(1,19)]
+    tile_names = [f'{seriesdir}CPseries/{prefix}_tile{tile}_green_2_600ms.CPseries.json.csv' for tile in range(1,19)]
     return tile_names
 
 

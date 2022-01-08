@@ -30,21 +30,20 @@ from fittinglibs import (fitting, plotting, fileio, processing, distribution, in
 
 
 
-parser = argparse.ArgumentParser(description='bootstrap fits')
+parser = argparse.ArgumentParser(description='Find Fmax Fmin distribution from variant fits')
 processing.add_common_args(parser.add_argument_group('common arguments'),
                            required_f=True, required_a=True, required_x=True)
 
-group = parser.add_argument_group('additional option arguments')
+parser.add_argument('-vf', '--variant_file', help='CPvariant single cluster fit result, filtered and bootstrapped to the variant level')
+parser.add_argument('-o', '--output', help='json file with parameters for Fmax and Fmin distributions')
+parser.add_argument('--figdir', help='Directory for plots')
 
-group.add_argument('-k', '--kd_cutoff', type=float,  
-                   help='highest kd for tight binders (nM). default is 0.99 bound at '
-                   'highest concentration')
-group.add_argument('-p', '--pvalue_cutoff', type=float, default=0.01,
-                   help='maximum pvalue for good binders. default is 0.01.')
+group = parser.add_argument_group('additional option arguments')
 group.add_argument('--use_simulated', type=int,
                    help='set to 0 or 1 if you want to use simulated distribution (1) or'
                    'not (0). Otherwise program will decide.')
-group.add_argument('--filterfun', default='default_filter', help='name of function in "ftilerfunctions" used to decide whether single cluster fit is good.')
+group.add_argument('-fmaxq', '--fmax_query', default='', help='Query string to select good variants for fmax fitting')
+group.add_argument('-fminq', '--fmin_query', default='', help='Query string to select good variants for fmin fitting')
 
 
 
@@ -63,48 +62,8 @@ def useSimulatedOrActual(variant_table, cutoff):
 if __name__=="__main__":
     args = parser.parse_args()
     processing.update_logger(logging, args.log)
-
-    fittedBindingFilename = args.single_cluster_fits
-    annotatedClusterFile  = args.annotated_clusters
-
-    outFile  = args.out_file
-    kd_cutoff = args.kd_cutoff
-    use_simulated = args.use_simulated
-    
-    # find out file
-    if outFile is None:
-        outFile = fileio.stripExtension(fittedBindingFilename) + '_init.CPvariant.gz'
         
-    # make fig directory
-    figDirectory = os.path.join(os.path.dirname(outFile), fileio.returnFigDirectory())
-    if not os.path.exists(figDirectory):
-        os.mkdir(figDirectory)
-
-    # need to define concentrations or kd_cutoff in order to find affinity cutoff
-    if args.xvalues is not None:
-        concentrations = np.loadtxt(args.xvalues)
-    elif kd_cutoff is None:
-        logging.error('Error: need to either give concentrations or kd_cutoff.')
-        sys.exit()
-        
-    # define cutoffs
-    parameters = fitting.fittingParameters()
-    if kd_cutoff is not None:
-        # adjust cutoff to reflect this fraction bound at last concentration
-        affinity_cutoff = parameters.find_dG_from_Kd(kd_cutoff)
-    else:
-        min_frac_bound = 0.95
-        affinity_cutoff = parameters.find_dG_from_frac_bound(min_frac_bound, concentrations.max())
-    pvalue_cutoff = args.pvalue_cutoff
-    logging.info('Using variants with kd less than %4.2f nM'%parameters.find_Kd_from_dG(affinity_cutoff))
-    logging.info('Using variants with pvalue less than %.1e'%pvalue_cutoff)
-
-    # load initial fits per cluster
-    logging.info('Loading data...')
-    initial_points = pd.concat([fileio.loadFile(annotatedClusterFile),
-                                fileio.loadFile(fittedBindingFilename).astype(float)], axis=1)
-
-    # find variant_table
+    # load variant_table
     filter_function = getattr(filterfunctions, args.filterfun)
     grouped = initial_points.dropna(subset=['variant_number']).groupby('variant_number')
     grouped_sub = filter_function(initial_points).dropna(subset=['variant_number']).groupby('variant_number')
@@ -161,7 +120,7 @@ if __name__=="__main__":
     plotting.plt.close()
     plotting.savefig(os.path.join(figDirectory, 'stde_fmax_vs_n.pdf'))
     plotting.plt.close()
-    plotting.savefig(os.path.join(figDirectory, 'fmax_dist.all.pdf'));
+    plotting.savefig(os.path.join(figDirectory, 'fmax_dist.all.pdf'))
     
     # save
     pickle.dump(fmaxDist, open( fileio.stripExtension(outFile)+'.fmaxdist.p', "wb" ))

@@ -25,8 +25,6 @@ if config["processingType"] == "pre-array":
 elif config["processingType"] == "post-array":
     fluor_files = get_fluor_names_from_mapfile(config["mapfile"], config["tifdir"], config["fluordir"])
     requested_output = config["seriesfile"]#fluor_files + [config["seriesdir"]]
-    # with open('test.txt', 'w+') as fh:
-    #     fh.writelines([l + '\n' for l in requested_output])
     
     if config["fitting"] == "NNN":
         requested_output.append(normalizedSeries)
@@ -40,8 +38,7 @@ rule all:
         #requested_output
         #config["sequencingResult"]#, #== Align sequencing data ==
         #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES) #== Plot fiducials ==
-        #datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_good_cluster_ind.txt"
-        get_series_tile_filenames(config["seriesdir"], config["prefix"])
+        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_good_cluster_ind.txt"
 
 
 # --- Rules --- #
@@ -354,17 +351,37 @@ rule bootstrap_variant_median:
     input:
         cf = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPfitted.gz",
         annotation = sequencingResult
-    params:
-        p = "dH Tm",
-        n_samples = "1000",
-        cluster_time = "02:00:00",
-        cluster_memory = "8G"
     output:
         variant = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPvariant",
         good_clusters = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_good_cluster_ind.txt"
+    params:
+        p = "dH Tm",
+        n_samples = "1000",
+        good_fit = config["query"]["singleCluster"],
+        vc = config["variantCol"],
+        cluster_time = "02:00:00",
+        cluster_memory = "8G"
     threads:
         20
     conda:
         "envs/fitting.yml"
     shell:
-        "python scripts/nnn_fitting/bootStrapFitFile.py -cf {input.cf} -a {input.annotation} -p {params.p} --n_samples {params.n_samples} -g {output.good_clusters}"
+        "python scripts/nnn_fitting/bootStrapFitFile.py -cf {input.cf} -a {input.annotation} -p {params.p} -vc {params.vc} --query {params.good_fit} --n_samples {params.n_samples} -g {output.good_clusters}"
+
+
+## fit_fmax_fmin_distribution
+rule fit_fmax_fmin_distribution:
+    input:
+        vf = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPvariant"
+    output:
+        fm = datadir + "fitted_fmax_fmin/%s_fmax_fmin.json" % config["imagingExperiment"],
+        plots = dir(expdir + "fig/fmax_fmin/")
+    params:
+        fmax_q = config["query"]["fmaxVariant"],
+        fmin_q = config["query"]["fminVariant"]
+    threads:
+        1
+    conda:
+        "envs/fitting.yml"
+    shell:
+        "python scripts/nnn_fitting/findFmaxFminDist.py -vf {input.vf} -o {output.fm} --figdir {output.plots} -fmaxq {params.fmax_q} -fminq {fmin_q}"
