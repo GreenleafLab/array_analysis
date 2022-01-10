@@ -6,12 +6,15 @@ import seaborn as sns
 import sys
 from scikits.bootstrap import bootstrap
 from statsmodels.distributions.empirical_distribution import ECDF
+import scipy.stats as st
 import warnings
 import itertools
 import scipy.stats as st
 import copy
 import datetime
 from fittinglibs import variables
+from fittinglibs.models import *
+from fittinglibs import models
 from .variables import fittingParameters
 
 def getFitParam(param, concentrations=None, init_val=None, vary=None, ub=None, lb=None):
@@ -513,6 +516,28 @@ def returnResultsFromParams(params, results, y):
     final_params.loc['rmse'] = rmse
     return final_params
 
+def returnFittingResults(fit, params, y, return_type='dict'):
+    """
+        fit - lmfit result object
+    """
+    if return_type == 'obj':
+        return fit
+    else:
+        result_dict = fit.best_values
+
+        for param in fit.params.values():
+            result_dict['%s_stderr'%param.name] = param.stderr
+
+        result_dict['RMSE'] = np.sqrt(np.nanmean((y - fit.best_fit)**2))
+        result_dict['rsqr'] = findRsq(y, fit)
+        
+        if return_type == 'dict':
+            return result_dict
+        elif return_type == 'list':
+            return list(result_dict.values())
+        else:
+            raise 'return_type must be obj, dict or list'
+
 
 def fit_single_cluster(y, model, return_type='dict'):
     """
@@ -560,3 +585,76 @@ def fit_single_clusters_in_df(model, series_df, conditions, parallel=False):
         fitted_df = series_df[conditions].apply(lambda y: fit_single_cluster(y, model), axis=1, result_type='expand')
     
     return fitted_df
+
+
+def fit_ecdf(ecdf, model, return_type='dict'):
+    """
+    Fit ecdf of fmax or fmin with a gamma distribution.
+    Args:
+        ecdf - ecdf object of fmax or fmin
+        model - lmfit model object
+        return_type - str. {'dict', 'obj', 'list'}
+    Returns:
+        dict containing best_values if not return_result_obj
+        or lmfit ModelResult obj
+        or a list
+    """
+    params = model.getParams()
+    
+    fit = model.fit(ecdf.y, params, x=ecdf.x)
+    
+    if return_type == 'obj':
+        return fit
+    else:
+        result_dict = fit.best_values
+        # result_dict.pop('x')
+        for param in fit.params.values():
+            result_dict['%s_stderr'%param.name] = param.stderr
+
+        result_dict['RMSE'] = np.sqrt(np.nanmean((ecdf.y - fit.best_fit)**2))
+        result_dict['rsqr'] = findRsq(ecdf.y, fit)
+        
+        if return_type == 'dict':
+            return result_dict
+        elif return_type == 'list':
+            return list(result_dict.values())
+        else:
+            raise 'return_type must be obj, dict or list'
+
+
+def fit_fmax(variant_table, variant_filter=None, fmax_filter=None, fit_fmin=False):
+    """
+    Get ecdf of fmax and fit to a gamma
+    Returns:
+        a dict
+    """
+    if fit_fmin:
+        var_name = 'fmin'
+    else:
+        var_name = 'fmax'
+    if variant_filter is None or fmax_filter is None:
+        vec = variant_table[var_name]
+    else:
+        vec = variant_table.query(variant_filter).query(fmax_filter)[var_name]
+    ecdf = ECDF(vec)
+    model = models.GammaModel(var_name=var_name)
+
+    return fit_ecdf(ecdf, model)
+
+
+def fit_sigma_n_fmax(good_variants_table, fit_fmin=False, variant_n_size_cutoff=10, return_type='dict'):
+    
+    if fit_fmin:
+        var_name = 'fmin'
+    else:
+        var_name = 'fmax'
+
+    group_size = good_variants_table.groupby('numTests').size()
+    valid_n = group_size.index[group_size > variant_n_size_cutoff]
+    fmax_std = good_variants_table.groupby('numTests').std().loc[valid_n, var_name]
+
+    model = models.SigmaNModel()
+    params = model.guess()
+    fit = model.fit(fmax_std, params, n=fmax_std.index)
+
+    return returnFittingResults(fit, params, y=fmax_std, return_type=return_type)

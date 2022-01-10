@@ -38,7 +38,7 @@ rule all:
         #requested_output
         #config["sequencingResult"]#, #== Align sequencing data ==
         #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES) #== Plot fiducials ==
-        datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_good_cluster_ind.txt"
+        datadir + "fitted_fmax_fmin/%s_fmax_fmin.json" % config["imagingExperiment"],
 
 
 # --- Rules --- #
@@ -375,13 +375,15 @@ rule fit_fmax_fmin_distribution:
         vf = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPvariant"
     output:
         fm = datadir + "fitted_fmax_fmin/%s_fmax_fmin.json" % config["imagingExperiment"],
-        plots = dir(expdir + "fig/fmax_fmin/")
+        plots = expand(expdir + "fig/%s_fmax_fmin/{plotname}"%config["experimentName"], plotname=['fmax_vs_dG_init.pdf', 'fmin_vs_dG_init.pdf'])
     params:
+        figdir = expdir + "fig/fmax_fmin/",
         fmax_q = config["query"]["fmaxVariant"],
-        fmin_q = config["query"]["fminVariant"]
+        fmin_q = config["query"]["fminVariant"],
+        variant_q = config["query"]["variant"]
     threads:
         1
     conda:
         "envs/fitting.yml"
     shell:
-        "python scripts/nnn_fitting/findFmaxFminDist.py -vf {input.vf} -o {output.fm} --figdir {output.plots} -fmaxq {params.fmax_q} -fminq {fmin_q}"
+        "python scripts/nnn_fitting/findFmaxFminDist.py -vf {input.vf} -o {output.fm} --figdir {params.figdir} -fmaxq {params.fmax_q} -fminq {params.fmin_q} --variant_filter {params.variant_q}"

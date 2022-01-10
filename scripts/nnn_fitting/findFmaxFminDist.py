@@ -6,10 +6,6 @@ Returns a class describing the fmax.
 Parameters:
 -----------
 variant_table : per-variant DataFrame including columns fmax, dG, and fmin, pvalue
-initial_points : per-cluster DataFrame including variant_number, fmax, dG, fmin
-affinity_cutoff : maximum dG (kcal/mol) to be included in fit of fmax
-use_simulated : (bool) whether to use distribution of median fmax or
-    subsampled fmaxes
 
 Returns:
 --------
@@ -24,26 +20,25 @@ from lmfit import Parameters, minimize
 import pandas as pd
 import logging
 import seaborn as sns
-import pickle
+import json
 
 from fittinglibs import (fitting, plotting, fileio, processing, distribution, initfits, filterfunctions)
 
 
 
 parser = argparse.ArgumentParser(description='Find Fmax Fmin distribution from variant fits')
-processing.add_common_args(parser.add_argument_group('common arguments'),
-                           required_f=True, required_a=True, required_x=True)
+# processing.add_common_args(parser.add_argument_group('common arguments'),
+#                            required_f=False, required_a=False, required_x=False)
 
-parser.add_argument('-vf', '--variant_file', help='CPvariant single cluster fit result, filtered and bootstrapped to the variant level')
+parser.add_argument('-vf', help='CPvariant single cluster fit result, filtered and bootstrapped to the variant level')
 parser.add_argument('-o', '--output', help='json file with parameters for Fmax and Fmin distributions')
 parser.add_argument('--figdir', help='Directory for plots')
 
 group = parser.add_argument_group('additional option arguments')
-group.add_argument('--use_simulated', type=int,
-                   help='set to 0 or 1 if you want to use simulated distribution (1) or'
-                   'not (0). Otherwise program will decide.')
-group.add_argument('-fmaxq', '--fmax_query', default='', help='Query string to select good variants for fmax fitting')
-group.add_argument('-fminq', '--fmin_query', default='', help='Query string to select good variants for fmin fitting')
+
+group.add_argument('--variant_filter', help='query string for good fit quaulity')                
+group.add_argument('-fmaxq', '--fmax_filter', default='', help='Query string to select good variants for fmax fitting')
+group.add_argument('-fminq', '--fmin_filter', default='', help='Query string to select good variants for fmin fitting')
 
 
 
@@ -59,106 +54,67 @@ def useSimulatedOrActual(variant_table, cutoff):
         use_actual = False
     return use_actual
 
+
+def findFmaxParams(good_variants_table, fit_fmin=False, variant_n_size_cutoff=10, figdir=None):
+    """
+    Returns a dictionary of fit parameters, mu and sigma.{a, b}
+    """
+    if fit_fmin:
+        var_name = 'fmin'
+    else:
+        var_name = 'fmax'
+
+    mu = good_variants_table[var_name].median()
+    sigma_dict = fitting.fit_sigma_n_fmax(good_variants_table, fit_fmin=fit_fmin, variant_n_size_cutoff=10, return_type='dict')
+
+    fmax_param_dict = {'mu': mu, 'sigma':sigma_dict}
+
+    if not figdir is None:
+        plotting.plotFmaxStdVsN(fmax_param_dict, good_variants_table, var_name)
+        plotting.savefig(os.path.join(figdir, '%s_stderr_vs_n.pdf'%var_name))
+        plotting.plt.close()
+
+    return fmax_param_dict
+
+
 if __name__=="__main__":
     args = parser.parse_args()
-    processing.update_logger(logging, args.log)
+    figdir = args.figdir
+    # processing.update_logger(logging, args.log)
         
+    filterFmaxVariant = lambda table: table.query(args.variant_filter).query(args.fmax_filter)
+    filterFminVariant = lambda table: table.query(args.variant_filter).query(args.fmin_filter)
+
     # load variant_table
-    filter_function = getattr(filterfunctions, args.filterfun)
-    grouped = initial_points.dropna(subset=['variant_number']).groupby('variant_number')
-    grouped_sub = filter_function(initial_points).dropna(subset=['variant_number']).groupby('variant_number')
-    variant_table = grouped.median()
-    variant_table.loc[:, 'numTests'] = grouped.size()
-    variant_table.loc[:, 'fitFraction'] = grouped_sub.size()/grouped.size()
-    variant_table.loc[:, 'pvalue'] = processing.findPvalueFitFraction(variant_table.fitFraction, variant_table.numTests)
+    variant_table = pd.read_csv(args.vf, sep='\t')
 
-    # do things on the good binders
-    good_fits = variant_table.pvalue < pvalue_cutoff
-    tight_binders = variant_table.loc[good_fits&(variant_table.dG<affinity_cutoff)]
+    # filter good variants and check
+    unstable_good_variants = filterFmaxVariant(variant_table)
+    stable_good_variants = filterFminVariant(variant_table)
 
-    # save variant table
-    variant_table.to_csv(outFile, sep='\t', compression='gzip')   
-
-    # find fmax distribution
-    logging.info(('%d out of %d variants pass cutoff')
-           %(len(tight_binders), len(variant_table)))
-    if len(tight_binders) < 10:
-        
-        logging.error('Error: need more variants passing cutoffs to fit')
-        logging.error("Only saved init file... ")
+    print(('%d out of all %d variants pass fmax cutoff')
+           %(len(unstable_good_variants), len(variant_table)))
+    print(('%d out of all %d variants pass fmin cutoff')
+           %(len(stable_good_variants), len(variant_table)))
+    if (len(unstable_good_variants) < 10) or (len(stable_good_variants) < 10):
+        print('Error: need more variants passing cutoffs to fit')
+        print("Only saved init file... ")
         sys.exit()
 
-    # find good variants
-    plotting.plotFmaxVsKd(variant_table.loc[good_fits], parameters.find_Kd_from_dG(affinity_cutoff))
-    plotting.savefig(os.path.join(figDirectory, 'fmax_vs_kd_init.pdf'))
+    # plot fmax fmin filtering
+    plotting.plotFmaxVsdG(variant_table, args.variant_filter, args.fmax_filter, T=60.0)
+    plotting.savefig(os.path.join(figdir, 'fmax_vs_dG_init.pdf'))
+    plotting.plt.close()
     
-    plotting.plotFmaxVsKd(variant_table.loc[good_fits], parameters.find_Kd_from_dG(affinity_cutoff),
-                         plot_fmin=True)
-    plotting.savefig(os.path.join(figDirectory, 'fmin_vs_kd_init.pdf'))  
-
-    # if use_simulated is not given, decide
-    if use_simulated is None:
-        use_simulated = not useSimulatedOrActual(variant_table.loc[good_fits], affinity_cutoff)
-    if use_simulated:
-        logging.info('Using fmaxes drawn randomly from clusters')
-    else:
-        logging.info('Using median fmaxes of variants')
-
+    plotting.plotFmaxVsdG(variant_table, args.variant_filter, args.fmin_filter, plot_fmin=True, T=20.0)
+    plotting.savefig(os.path.join(figdir, 'fmin_vs_dG_init.pdf'))
+    plotting.plt.close()
  
+    # fit the distribution parameters
+    fmax_param = findFmaxParams(unstable_good_variants, figdir=figdir)    
+    fmin_param = findFmaxParams(stable_good_variants, fit_fmin=True, figdir=figdir)    
 
-    # find fmax dist object
-    fmaxDist = distribution.findParams(tight_binders,
-                                use_simulated=use_simulated,
-                                table=initial_points)
-    if fmaxDist is None:
-        logging.info("could not make fmax dist file. Only saved init file... ")
-        sys.exit()
+    with open(args.output, 'w') as fh:
+        json.dump({'fmax': fmax_param, 'fmin': fmin_param}, fh, indent=4)
 
-    plotting.savefig(os.path.join(figDirectory, 'counts_vs_n_tight_binders.pdf'))
-    plotting.plt.close()
-    plotting.savefig(os.path.join(figDirectory, 'offset_fmax_vs_n.pdf'))
-    plotting.plt.close()
-    plotting.savefig(os.path.join(figDirectory, 'stde_fmax_vs_n.pdf'))
-    plotting.plt.close()
-    plotting.savefig(os.path.join(figDirectory, 'fmax_dist.all.pdf'))
-    
-    # save
-    pickle.dump(fmaxDist, open( fileio.stripExtension(outFile)+'.fmaxdist.p', "wb" ))
-        
-
-    
-    # generate example distributions
-    bounds = [0, distribution.findUpperboundFromFmaxDistObject(fmaxDist)]
-    numExamples = tight_binders.numTests.value_counts()
-    minNumDist = 20
-    while minNumDist >= 5:
-        validNs = pd.Series(numExamples.loc[numExamples >= minNumDist].sort_index().index.tolist())
-        if len(validNs) < 3:
-            minNumDist = minNumDist/2
-        else:
-            break
-        
-    if len(validNs) == 0:
-        logging.info('Error: no number of measurements has at least %s variants. Not generating example distribution plots.'%minNumDist)
-    else:
-        if len(validNs) <= 5:
-            plotTheseNs = validNs
-        else:
-            plotTheseNs = validNs.quantile([0, 0.1, 0.5, 0.9, 1], interpolation='nearest')
-            
-        for n in plotTheseNs:
-            plotting.plotAnyN(tight_binders, fmaxDist, n, bounds)
-            plotting.plt.xlim(bounds)
-            plotting.savefig(os.path.join(figDirectory, 'fmax_dist.n_%d.pdf'%n))
-
-    # plot fraction fit
-    plotting.plotFractionFit(variant_table, pvalue_threshold=pvalue_cutoff)
-    plotting.savefig(os.path.join(figDirectory, 'fraction_passing_cutoff_in_affinity_bins.pdf'))
-    plotting.plt.close()
-    plotting.savefig(os.path.join(figDirectory, 'histogram_fraction_fit.pdf'))
-    
-
-    
-
-                
-    
+    print("Parameter file saved to %s"%args.output)

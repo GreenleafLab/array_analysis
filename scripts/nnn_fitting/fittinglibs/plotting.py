@@ -22,11 +22,15 @@ import matplotlib.cm as cmx
 import matplotlib as mpl
 from matplotlib import gridspec
 from joblib import Parallel, delayed
-sns.set_style("white", {'xtick.major.size': 4,  'ytick.major.size': 4,
-                        'xtick.minor.size': 2,  'ytick.minor.size': 2,
-                        'lines.linewidth': 1})
+sns.set_context('paper')
+sns.set_style('ticks')
+# sns.set_style("white", {'xtick.major.size': 4,  'ytick.major.size': 4,
+#                         'xtick.minor.size': 2,  'ytick.minor.size': 2,
+#                         'lines.linewidth': 1})
 from  fittinglibs import objfunctions
 import fittinglibs.fitting as fitting
+
+ABS0 = 273.15
 
 def fix_axes(ax):
     ax.tick_params(which='minor', top='off', right='off')
@@ -38,7 +42,7 @@ def fix_axes(ax):
 
 def savefig(filename, **kwargs):
     """save fig"""
-    plt.savefig(filename, **kwargs)
+    plt.savefig(filename, dpi=300, bbox_inches='tight', **kwargs)
 
 def annotate_axes(s, ax=None, **kwargs):
     """annotate the current figure with string 's' """
@@ -234,7 +238,36 @@ def plotFitCurve(x, subSeries, results, param_names=None, ax=None, log_axis=True
     return
 
 
+def plotFmaxVsdG(variant_table, variant_filter, fmax_filter, T=37.0, plot_fmin=False,
+                palette=None, kde_plot=True, xlim=None, ylim=None):
+    """
+    Args:
+        T - float, celcius temperature for dG
+    """
+    sns.set_style('ticks')
+    sns.set_context('paper')
+    
+    dG = 'dG (%.2f°C)'%T
+    variant_table = variant_table.query(variant_filter)
+    variant_table.loc[:,dG] = variant_table.dH * (1 - (ABS0 + T) / variant_table.Tm)
+    variant_table.loc[:,'pass filter'] = variant_table.eval(fmax_filter)
+    
+    if plot_fmin:
+        y = 'fmin'
+    else:
+        y = 'fmax'
+    
+    median = np.median(variant_table.query(variant_filter).query(fmax_filter)[y])
+    
+    fig, ax = plt.subplots(1,2, figsize=(10,4))
+    ax[0].set_title('%.2f%% of variants passed the %s filter' % (100 * variant_table['pass filter'].sum() / len(variant_table), y))
+    sns.histplot(data=variant_table, x=dG, y=y, hue='pass filter', ax=ax[0], palette=palette)
+    sns.kdeplot(data=variant_table, x=y, hue='pass filter', ax=ax[1], palette=palette, multiple='layer', fill=True)
+    ax[1].plot([median]*2, [0, 1], 'k--')
+    ax[1].text(median, 1, '%.2f'%median, ha='center')
+    return fig, ax
 
+    
 def plotFmaxVsKd(variant_table, cutoff, subset=None, kde_plot=False,
                  plot_fmin=False, xlim=None, ylim=None):
     if subset is None:
@@ -296,33 +329,26 @@ def plotFmaxVsKd(variant_table, cutoff, subset=None, kde_plot=False,
     plt.plot([cutoff]*2, ylim, 'r:', label='cutoff for 95% bound')
     plt.tight_layout()
 
-def plotFmaxStdeVersusN(fmaxDist, stds_object, maxn, ax=None):
+
+def plotFmaxStdVsN(fmax_param_dict, good_variants_table, var_name, ax=None):
+    group_size = good_variants_table.groupby('numTests').size()
+    valid_n = group_size.index[group_size > 10]
+    fmax_std = good_variants_table.groupby('numTests').std().loc[valid_n, var_name]
+
     # plot
-    x = stds_object.index.tolist()
-    y = stds_object.loc[:, 'std']
-    params = fmaxDist.params
-    x_fit = np.arange(1, maxn)
-    y_fit = fmaxDist.sigma_by_n_fit(params, x_fit)
-    if ax is None:
-        fig = plt.figure(figsize=(4,3))
-        ax = fig.add_subplot(111)
-        marker='o'
-        color='k'
-        linestyle='-'
-        linecolor = 'c'
-    else:
-        marker='.'
-        color='0.5'
-        linestyle=':'
-        linecolor =color     
-    ax.scatter(x, y, s=10, marker=marker, color=color)
-    ax.plot(x_fit, y_fit, linestyle=linestyle, color=linecolor)
-    plt.xlabel('number of measurements')
-    plt.ylabel('standard deviation of median fmax')
-    plt.xlim(0, maxn)
-    fix_axes(ax)
-    plt.subplots_adjust(left=0.2, bottom=0.2, right=0.95, top=0.95)
+    a, b = fmax_param_dict['sigma']['a'], fmax_param_dict['sigma']['b']
+    n = np.arange(10, np.max(valid_n)+20)
+    y = a/np.sqrt(n) + b
+
+    fig, ax= plt.subplots()
+    sns.scatterplot(x=fmax_std.index, y=fmax_std, ax=ax, marker='s', color='k')
+    sns.lineplot(x=n, y=y, color='r')
+    
+    plt.ylabel('standard error of variant %s'%var_name)
+    plt.xlabel('#cluster per variant')
+    plt.ylim([0, y[0]])
     return ax
+
 
 def plotFmaxOffsetVersusN(fmaxDist, stds_object, maxn, ax=None):
     x = stds_object.index.tolist()
