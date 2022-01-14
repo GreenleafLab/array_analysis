@@ -147,6 +147,7 @@ if __name__ == '__main__':
         out_file = snakemake.output['out_file']
         xdata_file = snakemake.output['xdata_file']
         ext = snakemake.params['ext']
+        variant_col = snakemake.params['variant_col']
     else:
         # Runnig as a test
         CPseries_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_DNA_20211022.pkl'
@@ -157,9 +158,10 @@ if __name__ == '__main__':
         out_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_DNA_20211022_normalized.pkl'
         xdata_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_DNA_20211022_xdata.txt'
         ext = '.png'
+        variant_col = 'SEQID'
 
     # Load the data and condition names
-    clean_df = pd.read_pickle(CPseries_file).dropna()
+    clean_df = pd.read_pickle(CPseries_file).dropna(axis=0, thresh=5)
     metadata = pd.read_csv(mapfile)
     annotation = pd.read_csv(annotation_file, sep='\t')
     green_conditions = get_conditions_from_mapfile(mapfile, 'green')
@@ -203,7 +205,7 @@ if __name__ == '__main__':
     plot_color_coded_WC_examples(clean_df, annotation, final_norm_conditions, fig_path, n_variant_to_plot=40)
 
     # Save normalized data
-    clean_df[['clusterID', 'RefSeq'] + final_norm_conditions].set_index('clusterID').to_pickle(out_file)
+    clean_df[['clusterID', variant_col] + final_norm_conditions].set_index('clusterID').to_pickle(out_file)
     # clean_df[['clusterID'] + final_norm_conditions].set_index('clusterID').to_pickle(out_file)
     xdata = [get_xdata_from_condition(s) + '\n' for s in green_conditions]
     with open(xdata_file, 'w+') as fh:

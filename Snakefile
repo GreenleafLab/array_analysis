@@ -38,7 +38,7 @@ rule all:
         #requested_output
         #config["sequencingResult"]#, #== Align sequencing data ==
         #expand(expdir + "fig/fiducial/{tile}_Bottom_fiducial.png", tile=TILES) #== Plot fiducials ==
-        datadir + "fitted_fmax_fmin/%s_fmax_fmin.json" % config["imagingExperiment"],
+        datadir + "fitted_variant/" + config["imagingExperiment"] + ".CPvariant.gz"
 
 
 # --- Rules --- #
@@ -98,7 +98,8 @@ rule align_consensus_read_to_library:
         reference = config["referenceLibrary"],
         scoring_matrix = os.path.join(os.getcwd(), "data/reference/NUC.4.4") # need this to check existence of the matrix file
     output:
-        sequencingResult
+        seq_result = sequencingResult,
+        cluster_annot = sequencingResult.replace('.CPseq', '.CPannot')
     threads:
         6
     params:
@@ -110,7 +111,7 @@ rule align_consensus_read_to_library:
         "envs/align.yml"
     shell:
         """
-        python scripts/matchConsensusReadsToLibrary.py --beam {config[alignBeam]} {input.reads} --library {input.reference} -o {output} --scoringMatrix {input.scoring_matrix} --fiveprimeRegion {params.fiveprimeRegion} --threeprimeRegion {params.threeprimeRegion}
+        python scripts/matchConsensusReadsToLibrary.py --beam {config[alignBeam]} {input.reads} --library {input.reference} -o {output.seq_result} --cluster_annotation {output.cluster_annot} --scoringMatrix {input.scoring_matrix} --fiveprimeRegion {params.fiveprimeRegion} --threeprimeRegion {params.threeprimeRegion}
         """
 
 rule get_stats:
@@ -322,7 +323,8 @@ rule normalize_signal:
         xdata_file = config["imagingExperiment"] + "_xdata.txt"
     params:
         green_norm_condition = config["greenNormCondition"],
-        ext = ".pdf"
+        ext = ".pdf",
+        variant_col = config["variantCol"]
     threads:
         1
     script:
@@ -346,11 +348,12 @@ rule fit_single_cluster:
     shell:
         "python scripts/nnn_fitting/singleClusterFits.py --parallel -b {input.normalized} -x {input.xdata} -o {output} --mapfile {input.mapfile}"
 
+
 ## bootstrap_variant_median
 rule bootstrap_variant_median:
     input:
         cf = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPfitted.gz",
-        annotation = sequencingResult
+        annotation = sequencingResult.replace('.CPseq', '.CPannot')
     output:
         variant = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPvariant",
         good_clusters = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_good_cluster_ind.txt"
@@ -366,7 +369,10 @@ rule bootstrap_variant_median:
     conda:
         "envs/fitting.yml"
     shell:
-        "python scripts/nnn_fitting/bootStrapFitFile.py -cf {input.cf} -a {input.annotation} -p {params.p} -vc {params.vc} --query {params.good_fit} --n_samples {params.n_samples} -g {output.good_clusters}"
+        """
+        python scripts/nnn_fitting/bootStrapFitFile.py -cf {input.cf} -a {input.annotation} -g {output.good_clusters}\
+                -p {params.p} -vc {params.vc} --query {params.good_fit} --n_samples {params.n_samples}
+        """
 
 
 ## fit_fmax_fmin_distribution
@@ -374,10 +380,10 @@ rule fit_fmax_fmin_distribution:
     input:
         vf = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPvariant"
     output:
-        fm = datadir + "fitted_fmax_fmin/%s_fmax_fmin.json" % config["imagingExperiment"],
+        fm = datadir + "fitted_fmax_fmin/%s-fmax_fmin.json" % config["imagingExperiment"],
         plots = expand(expdir + "fig/%s_fmax_fmin/{plotname}"%config["experimentName"], plotname=['fmax_vs_dG_init.pdf', 'fmin_vs_dG_init.pdf'])
     params:
-        figdir = expdir + "fig/fmax_fmin/",
+        figdir = expdir + "fig/%s-fmax_fmin/"%config["imagingExperiment"],
         fmax_q = config["query"]["fmaxVariant"],
         fmin_q = config["query"]["fminVariant"],
         variant_q = config["query"]["variant"]
@@ -386,4 +392,41 @@ rule fit_fmax_fmin_distribution:
     conda:
         "envs/fitting.yml"
     shell:
-        "python scripts/nnn_fitting/findFmaxFminDist.py -vf {input.vf} -o {output.fm} --figdir {params.figdir} -fmaxq {params.fmax_q} -fminq {params.fmin_q} --variant_filter {params.variant_q}"
+        """
+        python scripts/nnn_fitting/findFmaxFminDist.py -vf {input.vf} -o {output.fm} --figdir {params.figdir}\
+                -fmaxq {params.fmax_q} -fminq {params.fmin_q} --variant_filter {params.variant_q}
+        """
+
+
+## fit_refine_variant: refine fit at the variant level using estimated fmax and fmin for those not reaching them
+rule fit_refine_variant:
+    input:
+        cluster = normalizedSeries,
+        variant = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + ".CPvariant",
+        xdata = datadir + "series_normalized/" + config["imagingExperiment"] + "_xdata.txt",
+        mapfile = config["mapfile"],
+        fm = datadir + "fitted_fmax_fmin/%s-fmax_fmin.json" % config["imagingExperiment"],
+        annotation = sequencingResult#.replace('.CPseq', '.CPannot')
+    output:
+        fitted = datadir + "fitted_variant/" + config["imagingExperiment"] + ".CPvariant.gz"#,
+        # plot = expdir + "fig/%s-fit_refine_variant/"%config["imagingExperiment"] + "dG_37_stderr_init_vs_final.pdf"
+    params:
+        figdir = expdir + "fig/%s-fit_refine_variant/"%config["imagingExperiment"],
+        p = "dH Tm",
+        n_bootstraps = "100",
+        vc = config["variantCol"],
+        good_clusters = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_good_cluster_ind.txt",
+        variant_q = config["query"]["variant"].replace(" ", ""),
+        cluster_time = "48:00:00",
+        cluster_memory = "32G"
+    threads:
+        18
+    conda:
+        "envs/fitting.yml"
+    shell:
+        """
+        python scripts/nnn_fitting/refineVariantFits.py --parallel -b {input.cluster} -vf {input.variant} -x {input.xdata}\
+        --cluster_annot {input.annotation} --fmax_fmin {input.fm} -o {output.fitted} --figdir {params.figdir}\
+        --param {params.p} --variant_col {params.vc} --n_bootstraps {params.n_bootstraps}\
+        --good_clusters {params.good_clusters} --variant_filter {params.variant_q}
+        """

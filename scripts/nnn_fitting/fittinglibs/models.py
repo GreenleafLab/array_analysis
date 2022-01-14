@@ -5,7 +5,8 @@ import scipy.stats as st
 class MeltCurveModel(lmfit.Model):
     def __init__(self, *args, **kwargs):
         self.T = kwargs['T']
-        self.f_margin = kwargs['f_margin']
+        if 'f_margin' in kwargs.keys():
+            self.f_margin = kwargs['f_margin']
 
         self.kB = 0.0019872
 
@@ -19,6 +20,9 @@ class MeltCurveModel(lmfit.Model):
         super(MeltCurveModel, self).__init__(melt_curve, *args, **kwargs)
 
     def guess(self, data, **kwargs):
+        """
+        For single cluster fit
+        """
         def guess_Tm(data):
             idmin = np.argmin(np.abs(data-0.5))
             return self.T[idmin]
@@ -41,6 +45,78 @@ class MeltCurveModel(lmfit.Model):
         
         return lmfit.models.update_param_vals(params, self.prefix, **kwargs)
 
+
+
+class MeltCurveRefineModel(MeltCurveModel):
+    """
+    One model for each variant. Repeatedly fit in each bootstrap iteration
+    """
+    def __init__(self, fmax_params_dict, variant_table_row, *args, **kwargs):
+
+        self.variant_table_row = variant_table_row
+        self.set_fmax_dist_params(fmax_params_dict, n=variant_table_row["numTests"])
+        super().__init__(*args, **kwargs)
+
+
+    def set_fmax_dist_params(self, fmax_params_dict, n):
+        def get_sigma(a,b,n):
+            return a / np.sqrt(n) + b
+
+        self.fmax_mu = fmax_params_dict["fmax"]["mu"]
+        self.fmin_mu = fmax_params_dict["fmin"]["mu"]
+        self.fmax_sigma = get_sigma( a=fmax_params_dict["fmax"]["sigma"]["a"],
+                        b=fmax_params_dict["fmax"]["sigma"]["b"], n=n )
+        self.fmin_sigma = get_sigma( a=fmax_params_dict["fmin"]["sigma"]["a"],
+                        b=fmax_params_dict["fmin"]["sigma"]["b"], n=n )
+
+        self.fmax_lb = self.fmax_mu - 2 * self.fmax_sigma
+        self.fmin_ub = self.fmin_mu + 2 * self.fmin_sigma
+
+
+    def guess(self, **kwargs):
+        """
+        For refine variant fit
+        Args:
+            variant_table_row - a row in the variant table with the bootstrapped single cluster fit results
+            reach_fmax, reach_fmin - bool, whether the variant has passed the reach fmax or fmin criteria
+                if not, draw from the estimated fmax fim distribution during fitting
+        """        
+        params = self.make_params()
+        def pset(param, value, minimum=-np.inf, maximum=np.inf):
+            params["%s%s" % (self.prefix, param)].set(value=value, min=minimum, max=maximum)
+
+        pset("fmax", self.fmax_mu)
+        pset("fmin", self.fmin_mu)
+        pset("dH", self.variant_table_row["dH_init"], maximum=0)
+        pset("Tm", self.variant_table_row["Tm_init"])
+        
+        return lmfit.models.update_param_vals(params, self.prefix, **kwargs)
+
+    def get_params_from_results(self, results, postfix=''):
+        params = self.make_params()
+
+        for p in self.param_names:
+            params[p].set(value=results[p + postfix])
+
+        return params
+
+    def draw_fmax_sample(self, params, var_name="fmax"):
+        assert var_name in ("fmax","fmin")
+
+        mu = getattr(self, "%s_mu"%var_name)
+        sigma = getattr(self, "%s_sigma"%var_name)
+        simulated_fmax = np.random.normal(loc=mu, scale=sigma)
+        params[var_name].set(value=simulated_fmax, vary=False)
+
+        return params
+
+    def make_fmaxes(self, n_samples=100, var_name="fmax"):
+
+        mu = getattr(self, "%s_mu"%var_name)
+        sigma = getattr(self, "%s_sigma"%var_name)
+        fmaxes = np.random.normal(loc=mu, scale=sigma, size=n_samples)
+
+        return fmaxes
 
 class GammaModel(lmfit.Model):
     def __init__(self, var_name, *args, **kwargs):

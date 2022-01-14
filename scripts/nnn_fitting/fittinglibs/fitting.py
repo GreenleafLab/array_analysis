@@ -12,6 +12,7 @@ import itertools
 import scipy.stats as st
 import copy
 import datetime
+from pandarallel import pandarallel
 from fittinglibs import variables
 from fittinglibs.models import *
 from fittinglibs import models
@@ -270,8 +271,9 @@ def enforceFmaxDistribution(median_fluorescence, fmaxDist, verbose=None, cutoff=
                   median_fluorescence[-1]*100/lowerbound)))
     return redoFitFmax
 
+
 def getClusterIndices(subSeries, n_samples=100, enforce_fmax=False, verbose=False):
-    """Based on indices, find a list of sets of lcusters to do bootstrapping on."""
+    """Based on indices, find a list of sets of clusters to do bootstrapping on."""
     # find number of samples to bootstrap
     numTests = len(subSeries)
     if numTests <10 and np.power(numTests, numTests) <= n_samples and not enforce_fmax:
@@ -378,7 +380,8 @@ def findProcessedSingles(singles, param_names):
     """Given the output of the singles, find the upper and lower bounds."""
     # save results
     data = pd.concat({param:singles.loc[:, param].quantile([0.5, 0.025, 0.975]) for param in param_names}, axis=1)
-    data.index = ['', '_lb', '_ub']
+    postfix = '_final'
+    data.index = [s+postfix for s in ['', '_lb', '_ub']]
     results = data.stack().swaplevel(0,1).sort_index()
     results.index = [''.join(s) for s in results.index.tolist()]
     return results
@@ -516,9 +519,18 @@ def returnResultsFromParams(params, results, y):
     final_params.loc['rmse'] = rmse
     return final_params
 
-def returnFittingResults(fit, params, y, return_type='dict'):
+
+##################################
+##### Begin Yuxi's functions #####
+##################################
+
+def returnFittingResults(fit, y, return_type='dict'):
     """
+    Process fitting result and return
+    Args:
         fit - lmfit result object
+        y - data
+        return_type - str. {'dict', 'obj', 'list'}
     """
     if return_type == 'obj':
         return fit
@@ -538,6 +550,7 @@ def returnFittingResults(fit, params, y, return_type='dict'):
         else:
             raise 'return_type must be obj, dict or list'
 
+# ------ Fit single cluster ------
 
 def fit_single_cluster(y, model, return_type='dict'):
     """
@@ -555,24 +568,7 @@ def fit_single_cluster(y, model, return_type='dict'):
     params = model.guess(y, x=T)
     fit = model.fit(y, params, T=T)
     
-    if return_type == 'obj':
-        return fit
-    else:
-        result_dict = fit.best_values
-        result_dict.pop('T')
-        for param in fit.params.values():
-            result_dict['%s_stderr'%param.name] = param.stderr
-
-        #result_dict['chisqr'] = fit.chisqr
-        result_dict['RMSE'] = np.sqrt(np.nanmean((y - fit.best_fit)**2))
-        result_dict['rsqr'] = findRsq(y, fit)
-        
-        if return_type == 'dict':
-            return result_dict
-        elif return_type == 'list':
-            return list(result_dict.values())
-        else:
-            raise 'return_type must be obj, dict or list'
+    return returnFittingResults(fit, y=y, return_type=return_type)
         
         
 def fit_single_clusters_in_df(model, series_df, conditions, parallel=False):
@@ -586,6 +582,7 @@ def fit_single_clusters_in_df(model, series_df, conditions, parallel=False):
     
     return fitted_df
 
+# ------ Find distributions ------
 
 def fit_ecdf(ecdf, model, return_type='dict'):
     """
@@ -657,4 +654,117 @@ def fit_sigma_n_fmax(good_variants_table, fit_fmin=False, variant_n_size_cutoff=
     params = model.guess()
     fit = model.fit(fmax_std, params, n=fmax_std.index)
 
-    return returnFittingResults(fit, params, y=fmax_std, return_type=return_type)
+    return returnFittingResults(fit, y=fmax_std, return_type=return_type)
+
+# ------ Refine fit variants ------
+
+def decide_enforce_fmax_distribution(median_signal, model):
+    enforce_fmax, enforce_fmin = True, True
+
+    if median_signal[-1] > model.fmax_lb:
+        enforce_fmax = False
+    elif median_signal[0] < model.fmin_ub:
+        enforce_fmin = False
+
+    return enforce_fmax, enforce_fmin
+
+def add_rsqr_rmse_to_results(results, model, y):
+    params = model.get_params_from_results(results, postfix='_final')
+    signal_eval = model.eval(params, T=model.T)
+
+    ss_total = np.nansum((y - y.mean())**2)
+    ss_error = np.nansum((y - signal_eval)**2)
+    rsqr = 1 - ss_error / ss_total
+    rmse = np.sqrt(ss_error)
+
+    results['rsqr_final'] = rsqr
+    results['RMSE_final'] = rmse
+
+    return results
+
+def add_median_signal(results, conditions, median_signal):
+    out = pd.concat( (results, pd.Series(data=median_signal, index=conditions, dtype=float)))
+    return out
+
+def fit_median_variant(median_signal, model, params, do_not_fit=False):
+    """
+    Fit median of signal in a single bootstrap run.
+    TODO: implement do_not_fit
+    """
+    fit = model.fit(median_signal, params, T=model.T)
+
+    result = fit.best_values
+    result.pop('T')
+
+    return result
+    
+
+def fit_variant_bootstrap(sub_cluster_table, model, weighted_fit=False, 
+        verbose=False, n_samples=100):
+
+    median_signal = np.median(sub_cluster_table, axis=0)
+    enforce_fmax, enforce_fmin = decide_enforce_fmax_distribution(median_signal, model)
+    if enforce_fmax:
+        fmaxes = model.make_fmaxes(n_samples)
+    if enforce_fmin:
+        fmins = model.make_fmaxes(n_samples, var_name="fmin")
+
+    indices = getClusterIndices(sub_cluster_table, n_samples=n_samples, verbose=verbose)
+
+    # bootstraping
+    singles = {}
+    for i, clusters in enumerate(indices):
+        median_fluorescence = np.nanmedian(sub_cluster_table.loc[clusters], axis=0)
+
+        if np.isfinite(median_fluorescence).sum() <= 4:
+            do_not_fit = True
+        else:
+            do_not_fit = False
+
+        params = model.guess()
+        if enforce_fmax:
+            params["fmax"].set(value=fmaxes[i], vary=False)
+        if enforce_fmin:
+            params["fmin"].set(value=fmins[i], vary=False)
+
+        singles[i] = fit_median_variant(median_fluorescence, model, params, do_not_fit=do_not_fit)
+    
+    singles = pd.DataFrame(singles).T
+    results = findProcessedSingles(singles, model.param_names)
+    results = add_rsqr_rmse_to_results(results, model, median_signal)
+    results = add_median_signal(results, sub_cluster_table.columns, median_signal)
+
+    return results
+
+
+def fit_single_variant(row, annotated_results, conditions, fmax_params_dict, xvalues, variant_col, n_samples=100):
+
+    model = MeltCurveRefineModel(fmax_params_dict, row, T=xvalues)
+    sub_cluster_table = annotated_results.query('%s == "%s"' % (variant_col, row.name))[conditions]
+    return fit_variant_bootstrap(sub_cluster_table, model, n_samples=n_samples)
+
+
+
+def fit_variant_bootstrap_df(cluster_table, variant_table, xvalues, annotated_clusters, fmax_params_dict, parallel=False, weighted_fit=False, n_samples=100):
+    """
+    fit all variants
+    """
+
+    variants = variant_table.index
+    variant_col = variants.name
+    conditions = cluster_table.columns.tolist()
+    annotated_results = pd.merge(left=annotated_clusters.dropna(), right=cluster_table, on='clusterID').set_index('clusterID')
+    
+    fitted_variant_table = pd.DataFrame(index=variants)
+
+    if parallel:
+        pandarallel.initialize()
+        fitted_variant_table = variant_table.parallel_apply(
+            lambda row: fit_single_variant(row, annotated_results, conditions, fmax_params_dict, xvalues, variant_col, n_samples=n_samples),
+            axis=1, result_type='expand')
+    else:
+        fitted_variant_table = variant_table.apply(
+            lambda row: fit_single_variant(row, annotated_results, conditions, fmax_params_dict, xvalues, variant_col, n_samples=n_samples),
+            axis=1, result_type='expand')
+
+    return fitted_variant_table
