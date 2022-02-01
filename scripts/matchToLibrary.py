@@ -149,8 +149,8 @@ if __name__=='__main__':
     parser.add_argument("--OligoPValue", action='store', default=1e-3, help='P-value cutoff for aligning reads to fluor and quench oligo.')
     parser.add_argument("--LibPValue", action='store', default=1e-6, help='P-value cutoff for aligning libregions to library.')
     parser.add_argument('-o', action='store',help='name of output CPseq without the .CPseq extension')
-    parser.add_argument('--cluster_annotation', action='store', help='truncated CPseq file with only clusterID and their variant annotation')
-    parser.add_argument('--variant_col', action='store', default='SEQID', help='str, header name of the column for variant annotation')
+    parser.add_argument('--clusterAnnotation', action='store', help='truncated CPseq file with only clusterID and their variant annotation')
+    parser.add_argument('--variantCol', action='store', default='SEQID', help='str, header name of the column for variant annotation')
     args = parser.parse_args()
 
     if args.o is None:
@@ -220,5 +220,5 @@ if __name__=='__main__':
 
     df.to_csv(args.o + 'CPseq', sep='\t', index=False)
     
-    if args.cluster_annotation is not None:
-        df[['clusterID', args.variant_col]].to_csv(args.cluster_annotation, sep='/t', index=False)
+    if args.clusterAnnotation is not None:
+        df[['clusterID', args.variantCol]].to_csv(args.cluster_annotation, sep='/t', index=False)

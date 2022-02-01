@@ -149,11 +149,11 @@ if __name__ == '__main__':
     annotated_results = pd.merge(left=annotated_clusters, right=cluster_data, on='clusterID').dropna(subset=annotated_clusters.columns.tolist() + param).set_index('clusterID')
     print('Clusters annotated')
 
-    # save
+    # run and save
     variant_table = findPerVariantInfo(annotated_results, param + ['fmax', 'fmin'], filterFits, variant_col=variant_col)
     print('Found per variant info')
 
-    variant_table = findBootstrappedVariantInfo(annotated_results, variant_table, param, filterFits, n_samples=n_samples, variant_col=variant_col, filter_fits=True)
+    variant_table = findBootstrappedVariantInfo(annotated_results, variant_table, param, filterFits, n_samples=n_samples, variant_col=variant_col, filter_fits=False)
     print('Finished bootstrapping')
 
     variant_table.to_csv(outFile + '.CPvariant', sep='\t')

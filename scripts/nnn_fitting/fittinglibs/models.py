@@ -55,6 +55,7 @@ class MeltCurveRefineModel(MeltCurveModel):
 
         self.variant_table_row = variant_table_row
         self.set_fmax_dist_params(fmax_params_dict, n=variant_table_row["numTests"])
+        self.epsilon = 0.01
         super().__init__(*args, **kwargs)
 
 
@@ -69,11 +70,11 @@ class MeltCurveRefineModel(MeltCurveModel):
         self.fmin_sigma = get_sigma( a=fmax_params_dict["fmin"]["sigma"]["a"],
                         b=fmax_params_dict["fmin"]["sigma"]["b"], n=n )
 
-        self.fmax_lb = self.fmax_mu - 2 * self.fmax_sigma
-        self.fmin_ub = self.fmin_mu + 2 * self.fmin_sigma
+        self.fmax_lb = self.fmax_mu - 10 * self.fmax_sigma
+        self.fmin_ub = self.fmin_mu + 10 * self.fmin_sigma
 
 
-    def guess(self, **kwargs):
+    def guess(self, enforce_fmax, enforce_fmin, **kwargs):
         """
         For refine variant fit
         Args:
@@ -91,6 +92,9 @@ class MeltCurveRefineModel(MeltCurveModel):
         pset("Tm", self.variant_table_row["Tm_init"])
         
         return lmfit.models.update_param_vals(params, self.prefix, **kwargs)
+
+    def is_good_init_fit(self):
+        return self.variant_table_row["pvalue"] < 0.01
 
     def get_params_from_results(self, results, postfix=''):
         params = self.make_params()
@@ -117,6 +121,41 @@ class MeltCurveRefineModel(MeltCurveModel):
         fmaxes = np.random.normal(loc=mu, scale=sigma, size=n_samples)
 
         return fmaxes
+
+    def decide_enforce_fmax_distribution(self, median_signal):
+        """
+        If True, enforce to fitted fmax or fmin distribution;
+        else, clamp to fmax init fit value during fitting
+        """
+        enforce_fmax, enforce_fmin = True, True
+
+        if (median_signal[-1] > self.fmax_lb) and (self.is_good_init_fit()):
+            enforce_fmax = False
+        elif (median_signal[0] < self.fmin_ub) and (self.is_good_init_fit()):
+            enforce_fmin = False
+
+        return enforce_fmax, enforce_fmin
+
+
+class MeltCurveVanillaModel(MeltCurveRefineModel):
+    """
+    Clamp fmax and fmin to 1 and 0
+    """
+    def make_fmaxes(self, n_samples=100, var_name="fmax"):
+
+        if var_name == "fmax":
+            fmaxes = np.ones(n_samples)
+        elif var_name == "fmin":
+            fmaxes = np.zeros(n_samples)
+
+        return fmaxes
+
+    def decide_enforce_fmax_distribution(self, median_signal, model):
+        """
+        Always enforce
+        """
+        return True, True
+
 
 class GammaModel(lmfit.Model):
     def __init__(self, var_name, *args, **kwargs):

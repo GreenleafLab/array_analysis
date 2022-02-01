@@ -16,7 +16,13 @@ dependencies:
   - lmfit
   - pandarallel
   - pytables
+  - scikit-learn
+  - umap-learn
+  - scanpy
+  - python-igraph
+  - leidenalg
   - pip:
     - tqdm
     - scikits.bootstrap
     - nwalign3
+    - python-louvain

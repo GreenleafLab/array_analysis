@@ -102,6 +102,9 @@ if __name__=="__main__":
         sys.exit()
 
     # plot fmax fmin filtering
+    if not os.path.isdir(figdir):
+        os.mkdir(figdir)
+        
     plotting.plotFmaxVsdG(variant_table, args.variant_filter, args.fmax_filter, T=60.0)
     plotting.savefig(os.path.join(figdir, 'fmax_vs_dG_init.pdf'))
     plotting.plt.close()

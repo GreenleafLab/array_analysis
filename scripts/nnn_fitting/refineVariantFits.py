@@ -39,6 +39,7 @@ logging.basicConfig(level=logging.DEBUG)
 #set up command line argument parser
 parser = argparse.ArgumentParser(description='refine fit variants to melt curve')
 processing.add_common_args(parser.add_argument_group('common arguments'), required_x=True)
+parser.add_argument('--mapfile', help='mapfile .csv')
 parser.add_argument('--cluster_annot', help='CPannot')
 parser.add_argument('-vf', help='CPvariant single cluster fit result, filtered and bootstrapped to the variant level')
 parser.add_argument('-o', '--output', help='fitted CPvariant file')
@@ -64,10 +65,29 @@ group.add_argument('--subset_num', default=5000, type=int,
 
     
 def checkFitResults(fitResults):
-    param_names = ['fmax', 'dH', 'Tm', 'fmin']
-    numVariants = fitResults.dropna(subset=param_names).shape[0]
-    logging.info('%4.2f%% clusters have ci length in dH < 50'
-           %(100*(fitResults.dH_ub_final - fitResults.dH_lb_final < 50).sum()/float(numVariants)))
+    numVariants = fitResults.dropna().shape[0]
+    logging.info('median R2 is %4.2f'
+            %(np.nanmedian(fitResults['rsqr_final'])))
+    logging.info('median RMSE is %4.2f'
+            %(np.nanmedian(fitResults['RMSE_final'])))
+    logging.info('median chi squared is %4.2f'
+            %(np.nanmedian(fitResults['chisq'])))
+    logging.info('%4.2f%% clusters have dH std < 5'
+           %(100*(fitResults.dH_std_final< 5).sum()/float(numVariants)))
+    logging.info('%4.2f%% clusters have RMSE < 0.2'
+           %(100*(fitResults.RMSE_final< 5).sum()/float(numVariants)))
+
+
+def get_conditions_from_mapfile(mapfile, channel):
+    """
+    Args:
+        mapfile - str, file name
+        channel - str, {'green', 'red'}
+    Return:
+        condition_list - List[str]
+    """
+    metadata = pd.read_csv(mapfile)
+    return metadata[metadata['curve_channel'] == channel]['condition'].tolist()
 
 
 if __name__=="__main__":    
@@ -84,25 +104,28 @@ if __name__=="__main__":
     # load files
     logging.info("Loading files...")
     cluster_table = fileio.loadFile(args.binding_series)
-    good_clusters = pd.read_csv(args.good_clusters, header=None).values.flatten()
+    # good_clusters = pd.read_csv(args.good_clusters, header=None).values.flatten()
     variant_table = pd.read_csv(args.vf, sep='\t').set_index(args.variant_col)
     xvalues = np.loadtxt(args.xvalues)
     annotated_clusters = pd.read_table(args.cluster_annot)[['clusterID', args.variant_col]]
     with open(args.fmax_fmin, 'r') as fh:
         fmax_params_dict = json.load(fh)
 
+    green_conditions = get_conditions_from_mapfile(args.mapfile, 'green')    
+    norm_conditions = [x+'_norm' for x in green_conditions]
     logging.info("Files loaded")
 
     # filter the tables
-    cluster_table = cluster_table.loc[cluster_table.index.isin(good_clusters), :]
-    variant_table = variant_table.query(args.variant_filter)
+    # cluster_table = cluster_table.loc[cluster_table.index.isin(good_clusters), :]
+    # variant_table = variant_table.query(args.variant_filter)
+    # variant_inds = np.random.choice(variant_table.index, 1000, replace=False)
+    # variant_table = variant_table.loc[variant_inds, :]
 
     # fit
     logging.info("Fitting curves...")
-
-    fitResults = fitting.fit_variant_bootstrap_df(cluster_table, variant_table, xvalues, annotated_clusters, fmax_params_dict, n_samples=args.n_bootstraps)
+    fitResults = fitting.fit_variant_bootstrap_df(cluster_table[norm_conditions], variant_table, xvalues, annotated_clusters, fmax_params_dict, n_samples=args.n_bootstraps)
     # save
     fitResults.to_csv(args.output, sep='\t', compression='gzip')
     logging.info(f"Saved results to {args.output}")
     
-    # checkFitResults(fitResults)
+    checkFitResults(fitResults)

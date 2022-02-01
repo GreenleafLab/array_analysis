@@ -143,7 +143,7 @@ if __name__ == '__main__':
         mapfile = snakemake.input['mapfile']
         annotation_file = snakemake.input['annotation']
         green_norm_condition = snakemake.params['green_norm_condition']
-        figdir = snakemake.output['figdir']
+        figdir = snakemake.params['figdir']
         out_file = snakemake.output['out_file']
         xdata_file = snakemake.output['xdata_file']
         ext = snakemake.params['ext']
@@ -161,11 +161,15 @@ if __name__ == '__main__':
         variant_col = 'SEQID'
 
     # Load the data and condition names
-    clean_df = pd.read_pickle(CPseries_file).dropna(axis=0, thresh=5)
+    clean_df = pd.read_pickle(CPseries_file).dropna()#.dropna(axis=0, thresh=5)
     metadata = pd.read_csv(mapfile)
     annotation = pd.read_csv(annotation_file, sep='\t')
     green_conditions = get_conditions_from_mapfile(mapfile, 'green')
     print('Data loaded.')
+
+    # create figdir
+    if not os.path.isdir(figdir):
+        os.makedirs(figdir)
 
     # long control and super stem refseqs
     long_refseq, stem_refseq = get_long_and_stem_refseq(annotation)
