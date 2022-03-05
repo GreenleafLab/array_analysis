@@ -71,7 +71,7 @@ def findFmaxParams(good_variants_table, fit_fmin=False, variant_n_size_cutoff=10
 
     if not figdir is None:
         plotting.plotFmaxStdVsN(fmax_param_dict, good_variants_table, var_name)
-        plotting.savefig(os.path.join(figdir, '%s_stderr_vs_n.pdf'%var_name))
+        plotting.savefig(os.path.join(figdir, '%s_std_vs_n.pdf'%var_name))
         plotting.plt.close()
 
     return fmax_param_dict

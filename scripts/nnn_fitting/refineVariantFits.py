@@ -65,18 +65,21 @@ group.add_argument('--subset_num', default=5000, type=int,
 
     
 def checkFitResults(fitResults):
-    numVariants = fitResults.dropna().shape[0]
-    logging.info('median R2 is %4.2f'
-            %(np.nanmedian(fitResults['rsqr_final'])))
-    logging.info('median RMSE is %4.2f'
-            %(np.nanmedian(fitResults['RMSE_final'])))
-    logging.info('median chi squared is %4.2f'
+    try:
+        numVariants = fitResults.dropna().shape[0]
+        logging.info('median R2 is %4.2f'
+            %(np.nanmedian(fitResults['rsqr'])))
+        logging.info('median RMSE is %4.2f'
+            %(np.nanmedian(fitResults['RMSE'])))
+        logging.info('median chi squared is %4.2f'
             %(np.nanmedian(fitResults['chisq'])))
-    logging.info('%4.2f%% clusters have dH std < 5'
-           %(100*(fitResults.dH_std_final< 5).sum()/float(numVariants)))
-    logging.info('%4.2f%% clusters have RMSE < 0.2'
-           %(100*(fitResults.RMSE_final< 5).sum()/float(numVariants)))
-
+        logging.info('%4.2f%% clusters have dH std < 5'
+           %(100*(fitResults.dH_se< 5).sum()/float(numVariants)))
+        logging.info('%4.2f%% clusters have RMSE < 0.2'
+           %(100*(fitResults.RMSE< 5).sum()/float(numVariants)))
+        
+    except:
+        logging.info('Error encountered while checking fit results')
 
 def get_conditions_from_mapfile(mapfile, channel):
     """

@@ -21,6 +21,7 @@ dependencies:
   - scanpy
   - python-igraph
   - leidenalg
+  - colorcet
   - pip:
     - tqdm
     - scikits.bootstrap

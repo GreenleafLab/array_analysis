@@ -2,7 +2,7 @@ import os
 from scripts.util import *
 
 ####### SELECT CONFIG FILE HERE #######
-configfile: "config/config_NNNlib2b_20211221.yaml"
+configfile: "config/config_NNNlib2b_20211223.yaml"
 #######################################
 
 # --- Define Global Variables --- #
@@ -421,7 +421,7 @@ rule fit_refine_variant:
         good_clusters = datadir + "fitted_single_cluster/" + config["imagingExperiment"] + "_good_cluster_ind.txt",
         variant_q = config["query"]["variant"].replace(" ", ""),
         cluster_time = "48:00:00",
-        cluster_memory = "32G"
+        cluster_memory = "16G"
     threads:
         20
     conda:

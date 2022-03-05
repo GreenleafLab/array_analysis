@@ -346,7 +346,7 @@ def plotFmaxStdVsN(fmax_param_dict, good_variants_table, var_name, ax=None):
     
     plt.ylabel('standard error of variant %s'%var_name)
     plt.xlabel('#cluster per variant')
-    plt.ylim([0, y[0]])
+    plt.ylim([0, y[0]+0.1])
     return ax
 
 

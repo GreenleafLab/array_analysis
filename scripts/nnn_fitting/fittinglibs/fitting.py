@@ -381,8 +381,8 @@ def findProcessedSingles(singles, param_names):
     """Given the output of the singles, find the upper and lower bounds and std error."""
     # save results
     data = pd.concat({param: pd.concat((singles.loc[:, param].quantile([0.5, 0.025, 0.975]), pd.Series(singles.loc[:, param].std()))) for param in param_names}, axis=1)
-    postfix = '_final'
-    data.index = [s+postfix for s in ['', '_lb', '_ub', '_std']]
+    postfix = ''#'_final'
+    data.index = [s+postfix for s in ['', '_lb', '_ub', '_se']]
     results = data.stack().swaplevel(0,1).sort_index()
     results.index = [''.join(s) for s in results.index.tolist()]
     return results
@@ -661,7 +661,7 @@ def fit_sigma_n_fmax(good_variants_table, fit_fmin=False, variant_n_size_cutoff=
 
 
 def add_fit_stats_to_results(results, model, sub_cluster_table):
-    params = model.get_params_from_results(results, postfix='_final')
+    params = model.get_params_from_results(results, postfix='')
     signal_eval = model.eval(params, T=model.T)
     y = np.median(sub_cluster_table, axis=0)
 
@@ -671,8 +671,8 @@ def add_fit_stats_to_results(results, model, sub_cluster_table):
     rsqr = 1 - ss_error / ss_total
     rmse = np.sqrt(ss_error)
 
-    results['rsqr_final'] = rsqr
-    results['RMSE_final'] = rmse
+    results['rsqr'] = rsqr
+    results['RMSE'] = rmse
 
     results['enforce_fmax'], results['enforce_fmin'] = model.decide_enforce_fmax_distribution(y)
 
@@ -680,10 +680,12 @@ def add_fit_stats_to_results(results, model, sub_cluster_table):
     # degrees of freedom
     n_param = 4 - results['enforce_fmax'] - results['enforce_fmin']
     n_obs = np.count_nonzero(~np.isnan(sub_cluster_table.values.flatten()))
-    n_T = sub_cluster_table.shape[1]
+    dof = n_obs - n_param
+    # n_T = sub_cluster_table.shape[1]
 
-    results['chisq'] = np.sum(np.sum((sub_cluster_table - signal_eval)**2, axis=0) / np.nanvar(sub_cluster_table, axis=0)) / (n_obs - n_param)
-    # results['chisquared_of_median'] = np.sum((y - signal_eval)**2 / np.nanvar(sub_cluster_table, axis=0)) / (n_T - n_param)
+    results['dof'] = dof
+    results['chisq'] = np.sum(np.sum((sub_cluster_table - signal_eval)**2, axis=0) / np.nanvar(sub_cluster_table, axis=0))# / (dof)
+    # results['chisq_median'] = np.sum((y - signal_eval)**2 / np.nanvar(sub_cluster_table, axis=0)) / (n_T - n_param)
 
     return results
 
@@ -756,7 +758,9 @@ def fit_variant_bootstrap(sub_cluster_table, model, weighted_fit=False,
         singles[i] = fit_median_variant(median_fluorescence, model, params, do_not_fit=do_not_fit)
     
     singles = pd.DataFrame(singles).T
-    results = findProcessedSingles(singles, model.param_names)
+    singles['dG_37'] = singles['dH'] * (1 - (37 + 273.15)/singles['Tm'])
+    singles['dS'] = singles['dH'] / singles['Tm']
+    results = findProcessedSingles(singles, model.param_names + ['dG_37', 'dS'])
     results = add_fit_stats_to_results(results, model, sub_cluster_table)
     results = add_median_signal(results, sub_cluster_table)
 

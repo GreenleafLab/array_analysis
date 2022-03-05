@@ -86,10 +86,10 @@ query:
         '"rsqr > 0.5 & fmin_init > -1 & fmin_init < 2 & fmax_init > 0 & fmax_init < 2 & dH_init > -400"'
     fmaxVariant:
         # filter specific to fmax, unstable constructs that are unfolded
-        '"1 / (1 + exp((dH/0.0019872) * (1/Tm - 1/(50 + 273.15) ))) > .99 & fmax > 0.5 & pvalue<0.01"'
+        '"1 / (1 + exp((dH/0.0019872) * (1/Tm - 1/(60 + 273.15) ))) > .975 & fmax > 0.5 & pvalue<0.01"'
     fminVariant:
         # filter specific to fmin, stable constructs that are folded
-        '"1 / (1 + exp((dH/0.0019872) * (1/Tm - 1/(35 + 273.15) ))) < .01 & fmin < 0.05 & pvalue<0.01"'
+        '"1 / (1 + exp((dH/0.0019872) * (1/Tm - 1/(20 + 273.15) ))) < .025 & fmin < 0.05 & pvalue<0.01"'
 # ====== Environment Configurations =====
 FLASHdir:
     /home/groups/wjg/kyx

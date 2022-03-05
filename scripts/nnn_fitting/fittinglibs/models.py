@@ -49,7 +49,7 @@ class MeltCurveModel(lmfit.Model):
 
 class MeltCurveRefineModel(MeltCurveModel):
     """
-    One model for each variant. Repeatedly fit in each bootstrap iteration
+    One model instance for each variant. Repeatedly fit in each bootstrap iteration
     """
     def __init__(self, fmax_params_dict, variant_table_row, *args, **kwargs):
 
@@ -61,7 +61,7 @@ class MeltCurveRefineModel(MeltCurveModel):
 
     def set_fmax_dist_params(self, fmax_params_dict, n):
         def get_sigma(a,b,n):
-            return a / np.sqrt(n) + b
+            return max(a / np.sqrt(n) + b, 0)
 
         self.fmax_mu = fmax_params_dict["fmax"]["mu"]
         self.fmin_mu = fmax_params_dict["fmin"]["mu"]
@@ -71,7 +71,7 @@ class MeltCurveRefineModel(MeltCurveModel):
                         b=fmax_params_dict["fmin"]["sigma"]["b"], n=n )
 
         self.fmax_lb = self.fmax_mu - 10 * self.fmax_sigma
-        self.fmin_ub = self.fmin_mu + 10 * self.fmin_sigma
+        self.fmin_ub = self.fmin_mu + 1 * self.fmin_sigma
 
 
     def guess(self, enforce_fmax, enforce_fmin, **kwargs):
@@ -131,7 +131,7 @@ class MeltCurveRefineModel(MeltCurveModel):
 
         if (median_signal[-1] > self.fmax_lb) and (self.is_good_init_fit()):
             enforce_fmax = False
-        elif (median_signal[0] < self.fmin_ub) and (self.is_good_init_fit()):
+        if (median_signal[0] < self.fmin_ub) and (self.is_good_init_fit()):
             enforce_fmin = False
 
         return enforce_fmax, enforce_fmin
@@ -209,7 +209,7 @@ class SigmaNModel(lmfit.Model):
         def pset(param, value, minimum=-np.inf, maximum=np.inf, vary=True):
             params["%s%s" % (self.prefix, param)].set(value=value, min=minimum, max=maximum, vary=vary)
 
-        pset("a", 4, minimum=0)
-        pset("b", 0)
+        pset("a", 0.1, minimum=0)
+        pset("b", 0.01, minimum=0)
 
         return lmfit.models.update_param_vals(params, self.prefix, **kwargs)
