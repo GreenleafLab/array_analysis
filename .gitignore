@@ -10,6 +10,7 @@ scripts/test.py
 *.err
 *.out
 .#*
+._*
 #Snakemake#
 *.h5
 cpseriestest.csv
