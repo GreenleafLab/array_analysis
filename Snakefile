@@ -2,7 +2,7 @@ import os
 from scripts.util import *
 
 ####### SELECT CONFIG FILE HERE #######
-configfile: "config/config_NNNlib2b_20211223.yaml"
+configfile: "config/config_NNNlib2b_20220314.yaml"
 #######################################
 
 # --- Define Global Variables --- #
@@ -263,7 +263,7 @@ rule write_old_mapfile:
     input:
         config['mapfile']
     output:
-        oldmapfile = datadir + 'tmp/' + config["experimentName"] + '.map'
+        oldmapfile = datadir + 'tmp/' + config["imagingExperiment"] + '.map'
     params:
         fluordir = config["fluordir"],
         cluster_memory = "500M",
@@ -280,7 +280,7 @@ rule write_old_mapfile:
 rule combine_signal:
     input:
         fluorfiles = fluor_files,
-        oldmapfile = datadir + 'tmp/' + config["experimentName"] + '.map',
+        oldmapfile = datadir + 'tmp/' + config["imagingExperiment"] + '.map',
         libdata = sequencingResult
     output:
         get_series_tile_filenames(config["seriesdir"], config["prefix"])
