@@ -9,7 +9,7 @@ fitting:
     # either 'NNN' or 'None'
     NNN
 datadir:
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/
+    /oak/stanford/groups/wjg/kyx/data/NNNlib2b_Nov11/data/
 fastq:
     read1:
         /oak/stanford/groups/wjg/kyx/data/NNNlib2b_processing_20211111/NNNlib2b_S1_L001_R1_001.fastq
@@ -19,11 +19,11 @@ sequencingResult:
     # csv file (CPseq) holding sequencing data aligned to the library
     # either output of `align_lib2b.sh` or generated within the workflow
     # location: {datadir}/aligned/
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/aligned/ConsensusReads_20211118_exact.CPseq
+    /oak/stanford/groups/wjg/kyx/data/NNNlib2b_Nov11/data/aligned/ConsensusReads_20220519_exact.CPseq
 referenceLibrary:
     # TSV file containing RefSeqs of the library design for alignment
     # should have a column named 'RefSeq'
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/reference/NNNlib2b_annotation_nupack.tsv
+    data/reference/NNNlib2b_annotation_20220519.tsv
 refSeqContext:
     # Context immediately surrounding the variable region in the library
     # Used for alignment
@@ -50,19 +50,19 @@ prefix:
     NNNlib2b_DNA
 tifdir:
     # directory holding all tif images, with a trailing slash
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/images_20211216/
+    /oak/stanford/groups/wjg/kyx/data/NNNlib2b_raw/images_20211216/
 fluordir:
     # output directory for CPfluor files, with a trailing slash
     # recommemded: {datadir}/fluor/
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/fluor_20211216/
+    /oak/stanford/groups/wjg/kyx/data/NNNlib2b_Nov11/data/fluor_20211216/
 seriesdir:
     # output directory for CPseries files, with a trailing slash
     # recommended: {datadir}/series/
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series_20211216/
+    /oak/stanford/groups/wjg/kyx/data/NNNlib2b_Nov11/data/series_20211216/
 seriesfile:
     # A big merged signal file with all the tiles from `seriesdir`
     # either .pkl or .h5
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series_merged/NNNlib2b_DNA_20211216.pkl
+    /oak/stanford/groups/wjg/kyx/data/NNNlib2b_Nov11/data/series_merged/NNNlib2b_DNA_20211216_v9.pkl
 mapfile:
     # a csv file with column `condition`
     config/nnnlib2b_20211216_map.csv
@@ -82,10 +82,10 @@ query:
         '"rsqr > 0.5 & fmin_init > -1 & fmin_init < 2 & fmax_init > 0 & fmax_init < 2 & dH_init > -400"'
     fmaxVariant:
         # filter specific to fmax, unstable constructs that are unfolded
-        '"1 / (1 + exp((dH/0.0019872) * (1/Tm - 1/(50 + 273.15) ))) > .99 & fmax > 0.5 & pvalue<0.01"'
+        '"1 / (1 + exp((dH/0.0019872) * (1/Tm - 1/(60 + 273.15) ))) > .975 & fmax > 0.5 & pvalue<0.01"'
     fminVariant:
         # filter specific to fmin, stable constructs that are folded
-        '"1 / (1 + exp((dH/0.0019872) * (1/Tm - 1/(35 + 273.15) ))) < .01 & fmin < 0.05 & pvalue<0.01"'
+        '"1 / (1 + exp((dH/0.0019872) * (1/Tm - 1/(35 + 273.15) ))) < .025 & fmin < 0.05 & pvalue<0.01"'
 # ====== Environment Configurations =====
 FLASHdir:
     /home/groups/wjg/kyx

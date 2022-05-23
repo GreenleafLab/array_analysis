@@ -37,11 +37,16 @@ def write_to_pickle(series_tiles, pklnm, mapfile, clean=True):
         print('Reading tile %03d' % i)
         tile = pd.read_csv(series_tiles[i - 1])
 
-        if clean:
-            tile.dropna(how='all', subset=conditions, inplace=True)
-            tile.drop_duplicates(subset='clusterID', keep=False, ignore_index=True, inplace=True)
+        if all(condition in tile.columns for condition in conditions):
+        # Check if all conditions are in the tile CPseries file
 
-        tiles.append(tile)
+            if clean:
+                tile.dropna(how='all', subset=conditions, inplace=True)
+                tile.drop_duplicates(subset='clusterID', keep=False, ignore_index=True, inplace=True)
+
+            tiles.append(tile)
+        else:
+            print('Tile CPseries file %s dropped for missing condition(s)'%series_tiles[i - 1])
 
     df = pd.concat(tiles, axis=0)
     df.to_pickle(pklnm)

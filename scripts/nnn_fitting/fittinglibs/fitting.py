@@ -660,7 +660,7 @@ def fit_sigma_n_fmax(good_variants_table, fit_fmin=False, variant_n_size_cutoff=
 # ------ Refine fit variants ------
 
 
-def add_fit_stats_to_results(results, model, sub_cluster_table):
+def add_fit_stats_to_results(results, model, sub_cluster_table, sigma_estimate=None):
     params = model.get_params_from_results(results, postfix='')
     signal_eval = model.eval(params, T=model.T)
     y = np.median(sub_cluster_table, axis=0)
@@ -685,6 +685,9 @@ def add_fit_stats_to_results(results, model, sub_cluster_table):
 
     results['dof'] = dof
     results['chisq'] = np.sum(np.sum((sub_cluster_table - signal_eval)**2, axis=0) / np.nanvar(sub_cluster_table, axis=0))# / (dof)
+    if not sigma_estimate is None:
+        # Use globally estimated uncertainty
+        results['chisq_global_sigma'] = np.sum(np.sum((sub_cluster_table - signal_eval)**2, axis=0) / sigma_estimate**2) 
     # results['chisq_median'] = np.sum((y - signal_eval)**2 / np.nanvar(sub_cluster_table, axis=0)) / (n_T - n_param)
 
     return results
@@ -709,12 +712,12 @@ def add_median_signal(results, sub_cluster_table):
     
     return out
 
-def fit_median_variant(median_signal, model, params, do_not_fit=False):
+def fit_median_variant(median_signal, model, params, weights=None, do_not_fit=False):
     """
     Fit median of signal in a single bootstrap run.
     TODO: implement do_not_fit
     """
-    fit = model.fit(median_signal, params, T=model.T)
+    fit = model.fit(median_signal, params, T=model.T, weights=weights)
 
     result = fit.best_values
     result.pop('T')
@@ -723,7 +726,7 @@ def fit_median_variant(median_signal, model, params, do_not_fit=False):
     
 
 def fit_variant_bootstrap(sub_cluster_table, model, weighted_fit=False, 
-        verbose=False, n_samples=100):
+        verbose=False, n_samples=100, sigma_estimate=None):
 
     median_signal = np.median(sub_cluster_table, axis=0)
     enforce_fmax, enforce_fmin = model.decide_enforce_fmax_distribution(median_signal)
@@ -738,6 +741,14 @@ def fit_variant_bootstrap(sub_cluster_table, model, weighted_fit=False,
     singles = {}
     for i, clusters in enumerate(indices):
         median_fluorescence = np.nanmedian(sub_cluster_table.loc[clusters], axis=0)
+        # Set the weights for fitting, 1/var
+        # if any temperature point has a weird weight, don't weight at all 
+        if weighted_fit:
+            weights = 1 / np.nanvar(sub_cluster_table.loc[clusters], axis=0)
+            if not np.all(np.isfinite(weights)):
+                weights = None
+        else:
+            weights = None
 
         if np.isfinite(median_fluorescence).sum() <= 4:
             do_not_fit = True
@@ -755,49 +766,53 @@ def fit_variant_bootstrap(sub_cluster_table, model, weighted_fit=False,
         else:
             params["fmin"].set(value=model.variant_table_row["fmin_init"], vary=True)
 
-        singles[i] = fit_median_variant(median_fluorescence, model, params, do_not_fit=do_not_fit)
+        singles[i] = fit_median_variant(median_fluorescence, model, params, weights=weights, do_not_fit=do_not_fit)
     
     singles = pd.DataFrame(singles).T
     singles['dG_37'] = singles['dH'] * (1 - (37 + 273.15)/singles['Tm'])
     singles['dS'] = singles['dH'] / singles['Tm']
     results = findProcessedSingles(singles, model.param_names + ['dG_37', 'dS'])
-    results = add_fit_stats_to_results(results, model, sub_cluster_table)
+    results = add_fit_stats_to_results(results, model, sub_cluster_table, sigma_estimate=sigma_estimate)
     results = add_median_signal(results, sub_cluster_table)
 
     return results
 
 
-def fit_single_variant(row, annotated_results, conditions, fmax_params_dict, xvalues, variant_col, n_samples=100):
+def fit_single_variant(row, annotated_results, conditions, fmax_params_dict, xvalues, variant_col, n_samples=100, sigma_estimate=None, weighted_fit=False):
 
     model = MeltCurveRefineModel(fmax_params_dict, row, T=xvalues)
     sub_cluster_table = annotated_results.query('%s == "%s"' % (variant_col, row.name))[conditions]
-    return fit_variant_bootstrap(sub_cluster_table, model, n_samples=n_samples)
+    return fit_variant_bootstrap(sub_cluster_table, model, n_samples=n_samples, sigma_estimate=sigma_estimate, weighted_fit=weighted_fit)
 
 
 
-def fit_variant_bootstrap_df(cluster_table, variant_table, xvalues, annotated_clusters, fmax_params_dict, parallel=False, weighted_fit=False, n_samples=100):
+def fit_variant_bootstrap_df(cluster_table, variant_table, xvalues, annotated_clusters, fmax_params_dict, conditions, parallel=False, weighted_fit=False, n_samples=100):
     """
     fit all variants
     """
 
     variants = variant_table.index
     variant_col = variants.name
-    conditions = cluster_table.columns.tolist()
-    if not variant_col in cluster_table.columns:
-        annotated_results = pd.merge(left=annotated_clusters.dropna(), right=cluster_table, on='clusterID').set_index('clusterID')
+    if not (variant_col in cluster_table.columns):
+        annotated_cluster_table = pd.merge(left=annotated_clusters.dropna(), right=cluster_table, on='clusterID').set_index('clusterID')
     else:
-        annotated_results = cluster_table
+        annotated_cluster_table = cluster_table
+    assert(variant_col in annotated_cluster_table.columns)
     
+    # estimate of sigma as a function of temperature to calculate chisq_glabal_sigma
+    sigma_vec = annotated_cluster_table.groupby(variant_col).apply(lambda x: np.nanstd(x, axis=0))
+    sigma_estimate = np.nanmedian(np.asarray(sigma_vec.values.tolist()), axis=0)
+
     fitted_variant_table = pd.DataFrame(index=variants)
 
     if parallel:
         pandarallel.initialize()
         fitted_variant_table = variant_table.parallel_apply(
-            lambda row: fit_single_variant(row, annotated_results, conditions, fmax_params_dict, xvalues, variant_col, n_samples=n_samples),
+            lambda row: fit_single_variant(row, annotated_cluster_table, conditions, fmax_params_dict, xvalues, variant_col, n_samples=n_samples, sigma_estimate=sigma_estimate, weighted_fit=weighted_fit),
             axis=1, result_type='expand')
     else:
         fitted_variant_table = variant_table.apply(
-            lambda row: fit_single_variant(row, annotated_results, conditions, fmax_params_dict, xvalues, variant_col, n_samples=n_samples),
+            lambda row: fit_single_variant(row, annotated_cluster_table, conditions, fmax_params_dict, xvalues, variant_col, n_samples=n_samples, sigma_estimate=sigma_estimate, weighted_fit=weighted_fit),
             axis=1, result_type='expand')
 
     return fitted_variant_table

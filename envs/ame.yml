@@ -3,5 +3,5 @@ dependencies:
   - python=2.7
   - numpy
   - pandas
-  - joblib
   - biopython
+  - joblib

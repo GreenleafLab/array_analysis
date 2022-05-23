@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.signal import savgol_filter
 sns.set_style('ticks')
 sns.set_context('paper')
 
@@ -56,10 +57,12 @@ def get_xdata_from_condition(condition):
 
 
 def get_long_and_stem_refseq(annotation):
+    long_ctrl = annotation.query('Series == "Control" & ConstructType != "SuperStem"')
+    long_ctrl = long_ctrl[long_ctrl.RefSeq.apply(len) >= 39]
+    long_ctrl = long_ctrl[long_ctrl.TargetStruct.apply(lambda x: x.count('.')) >= 20]
+    long_refseq = np.unique(long_ctrl.RefSeq)
 
-    control_refseq = np.unique(annotation[annotation['ConstructType'] == 'Control']['RefSeq'])
-    long_refseq = [seq for seq in control_refseq if len(seq) >= 39]
-    stem_refseq = np.unique(annotation[annotation['ConstructType'] == 'Super_Stable_Stem']['RefSeq'])
+    stem_refseq = np.unique(annotation[annotation['ConstructType'] == 'SuperStem']['RefSeq'])
 
     return long_refseq, stem_refseq
 
@@ -119,7 +122,7 @@ def get_good_control_refseq(control_median, control_refseq, percentile_cutoff=5,
 def plot_example_refseqs(refseqs, df, conditions, annotation, cmap, ylim=None):
     fig, ax = plt.subplots()
     for refseq in refseqs:
-        dG_37C = annotation[annotation['RefSeq'] == refseq]['dG_37C'].values[0]
+        dG_37C = annotation[annotation['RefSeq'] == refseq]['dG_37_NUPACK'].values[0]
         dG_37C = np.clip((dG_37C - (-10)) / (0 - (-10)), 0, 1)
         temperature, example_median = get_refseq_median(refseq, df, conditions)
         
@@ -148,6 +151,7 @@ if __name__ == '__main__':
         xdata_file = snakemake.output['xdata_file']
         ext = snakemake.params['ext']
         variant_col = snakemake.params['variant_col']
+        smooth = snakemake.params['smooth']
     else:
         # Runnig as a test
         CPseries_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_DNA_20211022.pkl'
@@ -194,6 +198,34 @@ if __name__ == '__main__':
     max_median, min_median = get_control_refseq_medians_and_plot(clean_df, good_long_refseq, good_stem_refseq, green_norm_conditions, fig_path=fig_path, ylim=[0, 3])
     max_median = np.median(max_median, axis=0)
     min_median = np.median(min_median, axis=0)
+
+    # Smooth max and min
+    if smooth.startswith('savgol'):
+        win_len, poly = int(smooth.split('_')[1]), int(smooth.split('_')[2])
+
+        max_median_s = savgol_filter(max_median, win_len, poly)
+        min_median_s = savgol_filter(min_median, win_len, poly)
+
+        try:
+            fig, ax = plt.subplots()
+            plt.plot(max_median,'ko')
+            plt.plot(min_median,'ko')
+            plt.plot(max_median_s, linewidth=3)
+            plt.plot(min_median_s, linewidth=3)
+            plt.savefig(os.path.join(figdir, 'smooth_fmax_fmin_01-before_after_smoothing_' + smooth + ext), dpi=300, bbox_inches='tight')
+        except:
+            print("Error when plotting smoothing results.")
+
+        max_median = max_median_s
+        min_median = min_median_s
+
+    try:
+        norm_df = pd.DataFrame({'max_median': max_median,
+                                'min_median': min_median})
+        norm_df.to_csv(xdata_file.replace('_xdata.txt', '_norm_max_min.tsv'), sep='\t', index=False)
+    except:
+        print('Trouble while saving max and min notmalization factors')
+
     max_min_median = max_median - min_median
     print('Fmax and Fmin calculated.')
 
