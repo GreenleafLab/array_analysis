@@ -4,14 +4,14 @@ channels:
   - defaults
 dependencies:
   - python=3.7
-  - numpy
-  - pandas
-  - scipy
-  - seaborn
-  - joblib
-  - lmfit
-  - pandarallel
-  - statsmodels
+  - numpy=1.21.2
+  - pandas=1.3.4
+  - scipy=1.7.3
+  - seaborn=0.11.2
+  - joblib=1.1.0
+  - lmfit=1.0.3
+  - pandarallel=1.5.5
+  - statsmodels=0.13.2
   - pip:
-    - tqdm
-    - scikits.bootstrap
+    - tqdm=4.64.0
+    - scikits.bootstrap=1.1.0

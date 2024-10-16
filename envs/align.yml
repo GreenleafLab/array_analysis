@@ -1,9 +1,9 @@
 name: align
 dependencies:
   - python=3.6
-  - numpy
-  - pandas
+  - numpy=1.19.2
+  - pandas=1.1.5
   - pip:
-    - tqdm
-    - nwalign3
-    - pandarallel
+    - tqdm=4.62.3
+    - nwalign3=0.1.2
+    - pandarallel=1.5.3

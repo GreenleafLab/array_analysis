@@ -1,9 +1,9 @@
 name: plotting
 dependencies:
   - python=3.7
-  - numpy
-  - pandas
-  - scipy
-  - matplotlib
-  - seaborn
-  - plotly
+  - numpy=1.20.3
+  - pandas=1.3.3
+  - scipy=1.7.1
+  - matplotlib=3.4.2
+  - seaborn=0.11.2
+  - plotly=5.1.0
