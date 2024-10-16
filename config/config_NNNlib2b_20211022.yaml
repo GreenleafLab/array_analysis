@@ -4,7 +4,7 @@ experimentName:
 processingType:
     # either 'pre-array' or 'post-array'
     # 'pre-array' for sequencing processing only
-    pre-array
+    post-array
 fitting:
     # either 'NNN' or 'None'
     # if NNN, fit curves
@@ -25,7 +25,7 @@ sequencingResult:
 referenceLibrary:
     # TSV file containing RefSeqs of the library design for alignment
     # should have a column named 'RefSeq'
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/reference/NNNlib2b_annotation_nupack.tsv
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/reference/NNNlib2b_annotation_20220324.tsv
 refSeqContext:
     # Context immediately surrounding the variable region in the library
     # Used for alignment

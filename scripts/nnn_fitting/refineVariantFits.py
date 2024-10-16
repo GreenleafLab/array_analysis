@@ -110,6 +110,7 @@ if __name__=="__main__":
     # good_clusters = pd.read_csv(args.good_clusters, header=None).values.flatten()
     variant_table = pd.read_csv(args.vf, sep='\t').set_index(args.variant_col)
     xvalues = np.loadtxt(args.xvalues)
+    # CPannot
     annotated_clusters = pd.read_table(args.cluster_annot)[['clusterID', args.variant_col]]
     with open(args.fmax_fmin, 'r') as fh:
         fmax_params_dict = json.load(fh)
@@ -126,9 +127,10 @@ if __name__=="__main__":
 
     # fit
     logging.info("Fitting curves...")
-    fitResults = fitting.fit_variant_bootstrap_df(cluster_table[norm_conditions], variant_table, xvalues, annotated_clusters, fmax_params_dict, n_samples=args.n_bootstraps)
+    fitResults = fitting.fit_variant_bootstrap_df(cluster_table, variant_table, xvalues, annotated_clusters, 
+        fmax_params_dict, conditions=norm_conditions, parallel=args.parallel, n_samples=args.n_bootstraps, weighted_fit=True)
     # save
     fitResults.to_csv(args.output, sep='\t', compression='gzip')
-    logging.info(f"Saved results to {args.output}")
+    logging.info("Saved results to %s"%args.output)
     
     checkFitResults(fitResults)

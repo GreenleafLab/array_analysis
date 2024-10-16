@@ -269,8 +269,8 @@ def makeCPseriesFile(cpseriesfilename, fluorFiles, appendLibData=None):
 
     # find signal for each fluor file
     for i, (idx, filename) in enumerate(fluorFiles.items()):
-        #print(idx, filename)
-        #print(identifiers[idx-1])
+        print(idx, filename)
+        print(identifiers[idx-1])
         if os.path.exists(filename):
             signal_file_exists[i] = True
             signals.append(pd.Series(getSignalFromCPFluor(filename), name=identifiers[idx]))

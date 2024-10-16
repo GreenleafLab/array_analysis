@@ -70,7 +70,7 @@ class MeltCurveRefineModel(MeltCurveModel):
         self.fmin_sigma = get_sigma( a=fmax_params_dict["fmin"]["sigma"]["a"],
                         b=fmax_params_dict["fmin"]["sigma"]["b"], n=n )
 
-        self.fmax_lb = self.fmax_mu - 10 * self.fmax_sigma
+        self.fmax_lb = self.fmax_mu - 2 * self.fmax_sigma
         self.fmin_ub = self.fmin_mu + 1 * self.fmin_sigma
 
 

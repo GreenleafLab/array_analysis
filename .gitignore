@@ -11,6 +11,7 @@ scripts/test.py
 *.out
 .#*
 ._*
+*.sh#
 #Snakemake#
 *.h5
 cpseriestest.csv
@@ -20,3 +21,5 @@ scripts/notebook
 test.*
 _README*
 *DS_Store
+.cache/
+.conda/
