@@ -727,7 +727,9 @@ def fit_median_variant(median_signal, model, params, weights=None, do_not_fit=Fa
 
 def fit_variant_bootstrap(sub_cluster_table, model, weighted_fit=False, 
         verbose=False, n_samples=100, sigma_estimate=None):
-
+    """
+    Refine fit.
+    """
     median_signal = np.median(sub_cluster_table, axis=0)
     enforce_fmax, enforce_fmin = model.decide_enforce_fmax_distribution(median_signal)
     if enforce_fmax:

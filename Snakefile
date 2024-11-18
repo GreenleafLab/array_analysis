@@ -2,7 +2,7 @@ import os
 from scripts.util import *
 
 ####### SELECT CONFIG FILE HERE #######
-configfile: "config/config_NNNlib2b_20240209.yaml"
+configfile: "config/config_rf009.yaml"
 #######################################
 
 # --- Define Global Variables --- #
@@ -226,97 +226,97 @@ rule plot_fiducials:
         "scripts/plotSeqs.py"
 
 
-## quantify_images: quantify intensities in tif and write to CPfluor
-## snakemake checks one tile per condition as input/output and submit one job per condition
-rule quantify_images:
-    input:
-        image = os.path.join(config["tifdir"], "{condition}/%s_{tile}_{channel}_600ms_{timestamp}.tif") % config["experimentName"],
-        libregion = expand(os.path.join(datadir, "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq"), tile=TILES)
-    output:
-        CPfluor = os.path.join(config["fluordir"], "{condition}/%s_{tile}_{channel}_600ms_{timestamp}.CPfluor") % config["experimentName"]#,
-    params:
-        image_dir = os.path.join(config["tifdir"],  "{condition}/"),
-        seq_dir = os.path.join(datadir, "filtered_tiles_libregion/"),
-        fluor_dir = os.path.join(config["fluordir"],  "{condition}/"),
-        roff_dir = os.path.join(datadir, "roff/{condition}/"),
-        reg_subset = "LibRegion",
-        log_dir = os.path.join(expdir,  "log/quantify_image_{condition}.log"),
-        num_cores = "18",
-        data_scaling = "MiSeq_to_TIRFStation1",
-        cluster_memory = "40G",
-        cluster_time = "15:00:00"
-    threads:
-        18
-    conda:
-        "envs/py36.yml"
-    shell:
-        """
-        module load matlab
-        export MATLABPATH=array_tools/CPscripts:array_tools/CPlibs
-        python3 array_tools/CPscripts/quantifyTilesDownstream.py -id {params.image_dir} -ftd {params.seq_dir} -fd {params.fluor_dir} -rod {params.roff_dir} -n {params.num_cores} -rs {params.reg_subset} -sf {params.data_scaling} -gv array_tools/
-        """
+# ## quantify_images: quantify intensities in tif and write to CPfluor
+# ## snakemake checks one tile per condition as input/output and submit one job per condition
+# rule quantify_images:
+#     input:
+#         image = os.path.join(config["tifdir"], "{condition}/%s_{tile}_{channel}_{exposure}_{timestamp}.tif") % config["prefix"],
+#         libregion = expand(os.path.join(datadir, "filtered_tiles_libregion/ALL_{tile}_Bottom_filtered.CPseq"), tile=TILES)
+#     output:
+#         CPfluor = os.path.join(config["fluordir"], "{condition}/%s_{tile}_{channel}_{exposure}_{timestamp}.CPfluor") % config["prefix"]#,
+#     params:
+#         image_dir = os.path.join(config["tifdir"],  "{condition}/"),
+#         seq_dir = os.path.join(datadir, "filtered_tiles_libregion/"),
+#         fluor_dir = os.path.join(config["fluordir"],  "{condition}/"),
+#         roff_dir = os.path.join(datadir, "roff/{condition}/"),
+#         reg_subset = "LibRegion",
+#         log_dir = os.path.join(expdir,  "log/quantify_image_{condition}.log"),
+#         num_cores = "18",
+#         data_scaling = "MiSeq_to_TIRFStation1",
+#         cluster_memory = "40G",
+#         cluster_time = "15:00:00"
+#     threads:
+#         18
+#     conda:
+#         "envs/py36.yml"
+#     shell:
+#         """
+#         module load matlab
+#         export MATLABPATH=array_tools/CPscripts:array_tools/CPlibs
+#         python3 array_tools/CPscripts/quantifyTilesDownstream.py -id {params.image_dir} -ftd {params.seq_dir} -fd {params.fluor_dir} -rod {params.roff_dir} -n {params.num_cores} -rs {params.reg_subset} -sf {params.data_scaling} -gv array_tools/
+#         """
 
 
-## write_old_mapfile: convert and prepare mapfile for the combine_signal step
-rule write_old_mapfile:
-    input:
-        config['mapfile']
-    output:
-        oldmapfile = os.path.join(datadir, 'tmp/', config["imagingExperiment"] + '.map')
-    params:
-        fluordir = config["fluordir"],
-        cluster_memory = "500M",
-        cluster_time = "0:15:00"
-    threads:
-        1
-    conda:
-        "envs/py36.yml"
-    shell:
-        "python3 scripts/writeOldMapfile.py {params.fluordir} {config[mapfile]} {output.oldmapfile}"
+# ## write_old_mapfile: convert and prepare mapfile for the combine_signal step
+# rule write_old_mapfile:
+#     input:
+#         config['mapfile']
+#     output:
+#         oldmapfile = os.path.join(datadir, 'tmp/', config["imagingExperiment"] + '.map')
+#     params:
+#         fluordir = config["fluordir"],
+#         cluster_memory = "500M",
+#         cluster_time = "0:15:00"
+#     threads:
+#         1
+#     conda:
+#         "envs/py36.yml"
+#     shell:
+#         "python3 scripts/writeOldMapfile.py {params.fluordir} {config[mapfile]} {output.oldmapfile}"
 
 
-## combine_signal: Integrate and combine CPfluor files of different conditions into a single CPseries file per tile
-rule combine_signal:
-    input:
-        fluorfiles = fluor_files,
-        oldmapfile = os.path.join(datadir, 'tmp/', config["imagingExperiment"] + '.map'),
-        libdata = sequencingResult
-    output:
-        get_series_tile_filenames(config["seriesdir"], config["prefix"])
-    params:
-        output_directory = config["seriesdir"],
-        cluster_memory = "80G",
-        cluster_time = "00:30:00",
-        num_cores = "6"
-    threads:
-        6
-    conda:
-        "envs/py36.yml"
-    shell:
-        """
-        python3 array_tools/bin_py3/processData.py -mf {input.oldmapfile} -od {params.output_directory} --appendLibData {input.libdata} --num_cores {params.num_cores}
-        """
+# ## combine_signal: Integrate and combine CPfluor files of different conditions into a single CPseries file per tile
+# rule combine_signal:
+#     input:
+#         fluorfiles = fluor_files,
+#         oldmapfile = os.path.join(datadir, 'tmp/', config["imagingExperiment"] + '.map'),
+#         libdata = sequencingResult
+#     output:
+#         get_series_tile_filenames(config["seriesdir"], config["prefix"])
+#     params:
+#         output_directory = config["seriesdir"],
+#         cluster_memory = "80G",
+#         cluster_time = "00:30:00",
+#         num_cores = "3"
+#     threads:
+#         3
+#     conda:
+#         "envs/py36.yml"
+#     shell:
+#         """
+#         python3 array_tools/bin_py3/processData.py -mf {input.oldmapfile} -od {params.output_directory} --appendLibData {input.libdata} --num_cores {params.num_cores}
+#         """
 
-## concat_tiles_signal: Concatenate one CPseries file per tile into one big CPseries file with all tiles
-rule concat_tiles_signal:
-    input:
-        series = get_series_tile_filenames(config["seriesdir"], config["prefix"]),
-        mapfile = config["mapfile"]
-    output:
-        config["seriesfile"]
-    conda:
-        "envs/py36.yml"
-    shell:
-        """
-        python3 scripts/concatTilesSignal.py --tiles {input.series} -o {output} -m {input.mapfile}
-        """
+# ## concat_tiles_signal: Concatenate one CPseries file per tile into one big CPseries file with all tiles
+# rule concat_tiles_signal:
+#     input:
+#         series = ancient(get_series_tile_filenames(config["seriesdir"], config["prefix"])),
+#         mapfile = ancient(config["mapfile"])
+#     output:
+#         config["seriesfile"]
+#     conda:
+#         "envs/py36.yml"
+#     shell:
+#         """
+#         python3 scripts/concatTilesSignal.py --tiles {input.series} -o {output} -m {input.mapfile}
+#         """
 
 ## normalize_signal: Given one merged CPseq file, normalize fluorescence signal for single cluster fit
 rule normalize_signal:
     input:
-        CPseries_file = config["seriesfile"],
-        mapfile = config["mapfile"],
-        annotation = config["referenceLibrary"]
+        CPseries_file = ancient(config["seriesfile"]),
+        mapfile = ancient(config["mapfile"]),
+        annotation = ancient(config["referenceLibrary"])
     output:
         out_file = os.path.join(datadir, 'series_normalized/',  "%s_normalized.pkl" % config["imagingExperiment"]),
         xdata_file = os.path.join(datadir, 'series_normalized/', "%s_xdata.txt" % config["imagingExperiment"])
@@ -421,7 +421,7 @@ rule fit_refine_variant:
         good_clusters = os.path.join(datadir, "fitted_single_cluster/", config["imagingExperiment"] + "_good_cluster_ind.txt"),
         variant_q = config["query"]["variant"].replace(" ", ""),
         cluster_time = "48:00:00",
-        cluster_memory = "32G"
+        cluster_memory = "48G"
     threads:
         20
     conda:

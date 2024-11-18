@@ -25,7 +25,7 @@ sequencingResult:
 referenceLibrary:
     # TSV file containing RefSeqs of the library design for alignment
     # should have a column named 'RefSeq'
-    /oak/stanford/groups/wjg/kyx/data/NNNlib2b_Nov11/data/reference/NNNlib2b_annotation_20220519.tsv
+    /home/groups/wjg/kyx/array_analysis/data/reference/NNNlib2b_annotation_20240209.tsv
 refSeqContext:
     # Context immediately surrounding the variable region in the library
     # Used for alignment

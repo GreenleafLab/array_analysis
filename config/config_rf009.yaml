@@ -1,0 +1,97 @@
+# === Experiment-dependent configurations === #
+experimentName:
+    rf009
+processingType:
+    # either 'pre-array' or 'post-array'
+    # 'pre-array' for sequencing processing only
+    post-array
+fitting:
+    # either 'NNN' or 'None'
+    NNN
+datadir:
+    /oak/stanford/groups/wjg/kyx/data/rf009
+fastq:
+    read1:
+        /oak/stanford/groups/wjg/kyx/data/rf009/fastq/RF009_R1.fastq
+    read2:
+        /oak/stanford/groups/wjg/kyx/data/rf009/fastq/RF009_R2.fastq
+sequencingResult:
+    # csv file (CPseq) holding sequencing data aligned to the library
+    # either output of `align_lib2b.sh` or generated within the workflow
+    # location: {datadir}/aligned/
+    /oak/stanford/groups/wjg/kyx/data/rf009/aligned/ConsensusReads_20240313_exact.CPseq
+referenceLibrary:
+    # TSV file containing RefSeqs of the library design for alignment
+    # should have a column named 'RefSeq'
+    data/reference/NNNlib2b_annotation_20240209.tsv
+refSeqContext:
+    # Context immediately surrounding the variable region in the library
+    # Used for alignment
+    fiveprime:
+        'GCTGTTGAAGGCTCGCGATGCACACGCTCTGGTACAAGGAA'
+    threeprime:
+        'AAGGCACTGGGCAATACGAGCTCAAGCCAGTCTCGCAGTCC'
+alignBeam:
+    # Number of similar library reference sequences to try for alignment
+    # if there is no exact match
+    # if set to 0 or 1, only allow exact match
+    0
+# --- Begin post-array config with imaging data ---
+imagingExperiment:
+    # unique name for the array experiment
+    # use this to distinguish multiple array experiments on the same chip
+    # usually use the date of the experiment
+    NNNlib2b_RNA_20240224
+prefix:
+    # prefix to the tif files 
+    # format: {prefix}_tile{tile}_focused_green_2_600ms.tif
+    # {prefix}_tile{tile}_green_2_600ms_{timestamp}.CPfluor [! no "focused"]
+    RNAmelt
+tifdir:
+    # directory holding all tif images, with a trailing slash
+    /oak/stanford/groups/wjg/kyx/data/rf009/images_20240324/
+fluordir:
+    # output directory for CPfluor files, with a trailing slash
+    # recommemded: {datadir}/fluor/
+    /oak/stanford/groups/wjg/kyx/data/rf009/fluor_20240324/
+seriesdir:
+    # output directory for CPseries files, with a trailing slash
+    # recommended: {datadir}/series/
+    /oak/stanford/groups/wjg/kyx/data/rf009/series_20240324/
+seriesfile:
+    # A big merged signal file with all the tiles from `seriesdir`
+    # either .pkl or .h5
+    /oak/stanford/groups/wjg/kyx/data/rf009/series_merged/NNNlib2b_RNA_20240324_v0.pkl
+mapfile:
+    # a csv file with column `condition`
+    config/nnnlib2b_20240324_map.csv
+# ------ Begin NNN fitting config ------
+greenNormCondition:
+    Green11_Cy3
+variantCol:
+    SEQID
+smooth:
+    # savgol_{window_length}_{polyorder} e.g. savgol_7_2 or 'None'
+    None
+query:
+    # query strings to filter for good fits
+    # need to double quote
+    singleCluster:
+        '"rsqr > 0.5 & fmin > -1 & fmin < 2 & fmin_stderr < fmin + 1 & fmax > 0 & fmax < 3 & fmax_stderr < fmax & Tm_stderr < 10 & dH_stderr < 100"'
+    variant:
+        # sanity filter for variants
+        # removes outliers
+        '"rsqr > 0.5 & fmin_init > -1 & fmin_init < 2 & fmax_init > 0 & fmax_init < 2 & dH_init > -400"'
+    fmaxVariant:
+        # filter specific to fmax, unstable constructs that are unfolded
+        '"1 / (1 + exp((dH/0.0019872) * (1/Tm - 1/(60 + 273.15) ))) > .975 & fmax > 0.5 & pvalue<0.1"'
+    fminVariant:
+        # filter specific to fmin, stable constructs that are folded
+        '"1 / (1 + exp((dH/0.0019872) * (1/Tm - 1/(35 + 273.15) ))) < .025 & fmin < 0.05 & pvalue<0.5"'
+FIDfilter:
+    data/reference/FID.CPfilter
+LibRegionFilter:
+    data/reference/LibRegion.CPfilter
+# ====== Environment Configurations =====
+FLASHdir:
+    /home/groups/wjg/kyx

@@ -33,20 +33,24 @@ def write_to_pickle(series_tiles, pklnm, mapfile, clean=True):
     conditions = pd.read_csv(mapfile)['condition'].tolist()
 
     tiles = []
-    for i in range(1,19):
-        print('Reading tile %03d' % i)
-        tile = pd.read_csv(series_tiles[i - 1])
-
-        if all(condition in tile.columns for condition in conditions):
-        # Check if all conditions are in the tile CPseries file
+    for tile in series_tiles:
+        try:
+            print('Reading %s' % tile)
+            tile = pd.read_csv(tile)
 
             if clean:
-                tile.dropna(how='all', subset=conditions, inplace=True)
-                tile.drop_duplicates(subset='clusterID', keep=False, ignore_index=True, inplace=True)
+                if all(condition in tile.columns for condition in conditions):
+                # Check if all conditions are in the tile CPseries file
+                    tile.dropna(how='all', subset=conditions, inplace=True)
+                    tile.drop_duplicates(subset='clusterID', keep=False, ignore_index=True, inplace=True)
 
-            tiles.append(tile)
-        else:
-            print('Tile CPseries file %s dropped for missing condition(s)'%series_tiles[i - 1])
+                    tiles.append(tile)
+                else:
+                    print('Tile CPseries file %s dropped for missing condition(s)'%series_tiles[i - 1])
+            else:
+                tiles.append(tile)
+        except:
+            print('File %s is missing' % tile)
 
     df = pd.concat(tiles, axis=0)
     df.to_pickle(pklnm)
@@ -58,12 +62,13 @@ if __name__ == "__main__":
                     help='list of CPseries files, each for a tile')
     parser.add_argument('-o', '--output', help='name of the output file, could be either .h5 or .pkl')
     parser.add_argument('-m', '--mapfile', help='a csv file with the col `condition` for filtering nans')
+    parser.add_argument('-c', '--clean', default=False, action='store_true', help='if given, only keep tiles with all conditions')
     
     args = parser.parse_args()
     
     if args.output.endswith('.h5'):
-        write_to_hdf5(series_tiles=args.tiles, pklnm=args.output, mapfile=args.mapfile, clean=True)
+        write_to_hdf5(series_tiles=args.tiles, pklnm=args.output, mapfile=args.mapfile, clean=args.clean)
     elif args.output.endswith('.pkl'):
-        write_to_pickle(series_tiles=args.tiles, pklnm=args.output, mapfile=args.mapfile, clean=True)
+        write_to_pickle(series_tiles=args.tiles, pklnm=args.output, mapfile=args.mapfile, clean=False)
     else:
         print('Output file must be .h5 or .pkl')

@@ -57,7 +57,7 @@ def get_xdata_from_condition(condition):
 
 
 def get_long_and_stem_refseq(annotation):
-    long_ctrl = annotation.query('Series == "Control" & ConstructType != "SuperStem"')
+    long_ctrl = annotation.query('ConstructType == "RepeatControls"')
     long_ctrl = long_ctrl[long_ctrl.RefSeq.apply(len) >= 39]
     long_ctrl = long_ctrl[long_ctrl.TargetStruct.apply(lambda x: x.count('.')) >= 20]
     long_refseq = np.unique(long_ctrl.RefSeq)
@@ -91,6 +91,8 @@ def get_control_refseq_medians_and_plot(clean_df, long_refseq, stem_refseq, cond
         temperature, stem_median[i,:] = get_refseq_median(stem_refseq[i], clean_df, conditions)
 
     fig, ax = plt.subplots()
+    temperature = [cond.split('_')[1] for cond in conditions]
+    print(conditions)
     plt.plot(temperature, long_median.T, 'orange')
     plt.plot(temperature, stem_median.T, 'purple')
     plt.ylim(ylim)
@@ -165,7 +167,7 @@ if __name__ == '__main__':
         variant_col = 'SEQID'
 
     # Load the data and condition names
-    clean_df = pd.read_pickle(CPseries_file).dropna()#.dropna(axis=0, thresh=5)
+    clean_df = pd.read_pickle(CPseries_file).dropna(axis=0, thresh=5)
     metadata = pd.read_csv(mapfile)
     annotation = pd.read_csv(annotation_file, sep='\t')
     green_conditions = get_conditions_from_mapfile(mapfile, 'green')
@@ -188,8 +190,12 @@ if __name__ == '__main__':
     norm_long_median, norm_stem_median = get_control_refseq_medians_and_plot(clean_df, long_refseq, stem_refseq, green_norm_conditions, fig_path=fig_path, ylim=[0, 3])
     
     # Pick the good max and min control variants
-    good_long_refseq = get_good_control_refseq(norm_long_median, long_refseq, percentile_cutoff=15, n_outlier_temp_point_thresh=1)
-    good_stem_refseq = get_good_control_refseq(norm_stem_median, stem_refseq, percentile_cutoff=1, n_outlier_temp_point_thresh=15)
+    # Less stringent cutoffs for RNA:
+    good_long_refseq = get_good_control_refseq(norm_long_median, long_refseq, percentile_cutoff=1, n_outlier_temp_point_thresh=17)
+    good_stem_refseq = get_good_control_refseq(norm_stem_median, stem_refseq, percentile_cutoff=.01, n_outlier_temp_point_thresh=18)
+    # More stringent cutoffs for DNA:
+    # good_long_refseq = get_good_control_refseq(norm_long_median, long_refseq, percentile_cutoff=15, n_outlier_temp_point_thresh=1)
+    # good_stem_refseq = get_good_control_refseq(norm_stem_median, stem_refseq, percentile_cutoff=1, n_outlier_temp_point_thresh=15)
     print('%d/%d selected for long Fmax controls' % (len(good_long_refseq), len(long_refseq)))
     print('%d/%d selected for stem Fmin controls' % (len(good_stem_refseq), len(stem_refseq)))
 
