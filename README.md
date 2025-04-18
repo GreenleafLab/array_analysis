@@ -3,6 +3,8 @@
 
 # Setup
 
+We assume `conda` is already installed on the machine.
+
 ## Install snakemake
 
 Install an environment with snakemake:
