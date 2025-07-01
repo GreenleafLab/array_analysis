@@ -4,7 +4,10 @@ experimentName:
 processingType:
     # either 'pre-array' or 'post-array'
     # 'pre-array' for sequencing processing only
-    pre-array
+    post-array
+fitting:
+    # either 'NNN' or 'None'
+    None
 datadir:
     /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/
 fastq:
@@ -34,20 +37,28 @@ alignBeam:
     # if set to 0 or 1, only allow exact match
     0
 # --- Begin post-array config with imaging data ---
+imagingExperiment:
+    NNNlib2b_DNA
 tifdir:
     # directory holding all tif images, with a trailing slash
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/images_20211022/
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/images_20211221/
 fluordir:
     # output directory for CPfluor files, with a trailing slash
     # recommemded: {datadir}/fluor/
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/fluor/
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/fluor_20211221/
 seriesdir:
     # output directory for CPseries files, with a trailing slash
     # recommended: {datadir}/series/
-    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series/
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series_20211221/
+seriesfile:
+    # A big merged signal file with all the tiles from `seriesdir`
+    # either .pkl or .h5
+    /scratch/groups/wjg/kyx/NNNlib2b_Nov11/data/series_merged_20211221/NNNlib2b_DNA_20211221.pkl
 mapfile:
     # a csv file with column `condition`
-    config/nnnlib2b_map.csv
+    config/nnnlib2b_20211221_map.csv
+greenNormCondition:
+    Green07_Cy3
 FIDfilter:
     data/reference/FID.CPfilter
 LibRegionFilter:

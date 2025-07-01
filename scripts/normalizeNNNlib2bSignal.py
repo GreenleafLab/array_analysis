@@ -5,8 +5,9 @@ Input:
     A mapfile csv file that instructs which columns to normalize and keep
     An annotation tsv file that determines which variants to use as initial Fmax and Fmin controls
 Output:
-    Normalized data with columns ['clusterID', 'RefSeq'] + final_norm_conditions
+    Normalized data with index 'clusterID' and columns final_norm_conditions
     where sequence number and temperatures are in the `final_norm_conditions` header
+
 Yuxi Ke, Nov 2021
 """
 from typing_extensions import final
@@ -14,6 +15,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.signal import savgol_filter
 sns.set_style('ticks')
 sns.set_context('paper')
 
@@ -42,6 +44,7 @@ def get_conditions_from_mapfile(mapfile, channel):
     metadata = pd.read_csv(mapfile)
     return metadata[metadata['curve_channel'] == channel]['condition'].tolist()
 
+
 def get_xdata_from_condition(condition):
     """
     Args:
@@ -52,17 +55,20 @@ def get_xdata_from_condition(condition):
     xdata = float(condition.split('_')[1]) + 273.15
     return '%.2f'%xdata
 
-def get_long_and_stem_refseq(annotation):
 
-    control_refseq = np.unique(annotation[annotation['ConstructType'] == 'Control']['RefSeq'])
-    long_refseq = [seq for seq in control_refseq if len(seq) >= 39]
-    stem_refseq = np.unique(annotation[annotation['ConstructType'] == 'Super_Stable_Stem']['RefSeq'])
+def get_long_and_stem_refseq(annotation):
+    long_ctrl = annotation.query('Series == "Control" & ConstructType != "SuperStem"')
+    long_ctrl = long_ctrl[long_ctrl.RefSeq.apply(len) >= 39]
+    long_ctrl = long_ctrl[long_ctrl.TargetStruct.apply(lambda x: x.count('.')) >= 20]
+    long_refseq = np.unique(long_ctrl.RefSeq)
+
+    stem_refseq = np.unique(annotation[annotation['ConstructType'] == 'SuperStem']['RefSeq'])
 
     return long_refseq, stem_refseq
 
 
 def get_refseq_median(refseq, df, conditions):
-    
+
     warnings.filterwarnings("ignore")
 
     temperature = [cond.split('_')[1] for cond in conditions]
@@ -116,7 +122,7 @@ def get_good_control_refseq(control_median, control_refseq, percentile_cutoff=5,
 def plot_example_refseqs(refseqs, df, conditions, annotation, cmap, ylim=None):
     fig, ax = plt.subplots()
     for refseq in refseqs:
-        dG_37C = annotation[annotation['RefSeq'] == refseq]['dG_37C'].values[0]
+        dG_37C = annotation[annotation['RefSeq'] == refseq]['dG_37_NUPACK'].values[0]
         dG_37C = np.clip((dG_37C - (-10)) / (0 - (-10)), 0, 1)
         temperature, example_median = get_refseq_median(refseq, df, conditions)
         
@@ -124,10 +130,10 @@ def plot_example_refseqs(refseqs, df, conditions, annotation, cmap, ylim=None):
     ax.set_ylim(ylim)
 
 
-def plot_color_coded_WC_examples(clean_df, annotation, final_norm_conditions, fig_path, n_varaint_to_plot=30):
+def plot_color_coded_WC_examples(clean_df, annotation, final_norm_conditions, fig_path, n_variant_to_plot=30):
     np.random.seed(42)
     cmap = sns.cubehelix_palette(start=1, rot=-.8, reverse=True, as_cmap=True)
-    WC_refseqs = annotation[annotation['Series'] == 'WatsonCrick']['RefSeq'].values[np.random.choice((annotation['Series'] == 'WatsonCrick').sum(), n_varaint_to_plot)]
+    WC_refseqs = annotation[annotation['Series'] == 'WatsonCrick']['RefSeq'].values[np.random.choice((annotation['Series'] == 'WatsonCrick').sum(), n_variant_to_plot)]
     plot_example_refseqs(WC_refseqs, clean_df, final_norm_conditions, annotation, cmap=cmap, ylim=[-.2, 1.2])
     plt.savefig(fig_path, dpi=300, bbox_inches='tight')
 
@@ -140,26 +146,34 @@ if __name__ == '__main__':
         mapfile = snakemake.input['mapfile']
         annotation_file = snakemake.input['annotation']
         green_norm_condition = snakemake.params['green_norm_condition']
-        figdir = snakemake.output['figdir']
+        figdir = snakemake.params['figdir']
         out_file = snakemake.output['out_file']
+        xdata_file = snakemake.output['xdata_file']
         ext = snakemake.params['ext']
+        variant_col = snakemake.params['variant_col']
+        smooth = snakemake.params['smooth']
     else:
         # Runnig as a test
-        CPseries_file = 'NNNlib2b_DNA_20211022.pkl'
-        mapfile = 'nnnlib2b_map.csv'
-        annotation_file = 'NNNlib2b_annotation_nupack.txt'
+        CPseries_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_DNA_20211022.pkl'
+        mapfile = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\nnnlib2b_map.csv'
+        annotation_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_annotation_nupack.txt'
         green_norm_condition = 'Green07_PostCy3'
-        figdir = '.\\fig\\20211123'
-        out_file = 'NNNlib2b_DNA_20211022_normalized.pkl'
-        xdata_file = 'NNNlib2b_DNA_20211022_xdata.txt'
+        figdir = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\fig\20211123'
+        out_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_DNA_20211022_normalized.pkl'
+        xdata_file = r'C:\Users\Yuxi\workspace\NNNlib2b_CPseries\NNNlib2b_DNA_20211022_xdata.txt'
         ext = '.png'
+        variant_col = 'SEQID'
 
     # Load the data and condition names
-    clean_df = pd.read_pickle(CPseries_file).dropna()
+    clean_df = pd.read_pickle(CPseries_file).dropna()#.dropna(axis=0, thresh=5)
     metadata = pd.read_csv(mapfile)
     annotation = pd.read_csv(annotation_file, sep='\t')
     green_conditions = get_conditions_from_mapfile(mapfile, 'green')
     print('Data loaded.')
+
+    # create figdir
+    if not os.path.isdir(figdir):
+        os.makedirs(figdir)
 
     # long control and super stem refseqs
     long_refseq, stem_refseq = get_long_and_stem_refseq(annotation)
@@ -184,6 +198,34 @@ if __name__ == '__main__':
     max_median, min_median = get_control_refseq_medians_and_plot(clean_df, good_long_refseq, good_stem_refseq, green_norm_conditions, fig_path=fig_path, ylim=[0, 3])
     max_median = np.median(max_median, axis=0)
     min_median = np.median(min_median, axis=0)
+
+    # Smooth max and min
+    if smooth.startswith('savgol'):
+        win_len, poly = int(smooth.split('_')[1]), int(smooth.split('_')[2])
+
+        max_median_s = savgol_filter(max_median, win_len, poly)
+        min_median_s = savgol_filter(min_median, win_len, poly)
+
+        try:
+            fig, ax = plt.subplots()
+            plt.plot(max_median,'ko')
+            plt.plot(min_median,'ko')
+            plt.plot(max_median_s, linewidth=3)
+            plt.plot(min_median_s, linewidth=3)
+            plt.savefig(os.path.join(figdir, 'smooth_fmax_fmin_01-before_after_smoothing_' + smooth + ext), dpi=300, bbox_inches='tight')
+        except:
+            print("Error when plotting smoothing results.")
+
+        max_median = max_median_s
+        min_median = min_median_s
+
+    try:
+        norm_df = pd.DataFrame({'max_median': max_median,
+                                'min_median': min_median})
+        norm_df.to_csv(xdata_file.replace('_xdata.txt', '_norm_max_min.tsv'), sep='\t', index=False)
+    except:
+        print('Trouble while saving max and min notmalization factors')
+
     max_min_median = max_median - min_median
     print('Fmax and Fmin calculated.')
 
@@ -196,11 +238,11 @@ if __name__ == '__main__':
     fig_path = os.path.join(figdir, 'max_min_normalized_curves_01-good_controls' + ext)
     _,_ = get_control_refseq_medians_and_plot(clean_df, long_refseq=good_long_refseq, stem_refseq=good_stem_refseq, conditions=final_norm_conditions, fig_path=fig_path, ylim=[-.2, 1.5])
     fig_path = os.path.join(figdir, 'max_min_normalized_curves_02-example_WC_melt_curves' + ext)
-    plot_color_coded_WC_examples(clean_df, annotation, final_norm_conditions, fig_path, n_varaint_to_plot=40)
+    plot_color_coded_WC_examples(clean_df, annotation, final_norm_conditions, fig_path, n_variant_to_plot=40)
 
     # Save normalized data
-    # clean_df[['clusterID', 'RefSeq'] + final_norm_conditions].to_pickle(out_file)
-    clean_df[['clusterID'] + final_norm_conditions].set_index('clusterID').to_pickle(out_file)
+    clean_df[['clusterID', variant_col] + final_norm_conditions].set_index('clusterID').to_pickle(out_file)
+    # clean_df[['clusterID'] + final_norm_conditions].set_index('clusterID').to_pickle(out_file)
     xdata = [get_xdata_from_condition(s) + '\n' for s in green_conditions]
     with open(xdata_file, 'w+') as fh:
         fh.writelines(xdata)

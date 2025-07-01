@@ -131,6 +131,7 @@ if __name__=='__main__':
     parser.add_argument("--OligoPValue", action='store', default=1e-3, help='P-value cutoff for aligning reads to fluor and quench oligo.')
     parser.add_argument("--LibPValue", action='store', default=1e-6, help='P-value cutoff for aligning libregions to library.')
     parser.add_argument('-o', action='store',help='name of output CPseq')
+    parser.add_argument('--clusterAnnotation', help='file for storing a downsized CPannot file. If left empty, do not store it.')
     parser.add_argument('--scoringMatrix', action='store', default='NUC.4.4', help='path to the scoring matrix file')
     parser.add_argument('--fiveprimeRegion', action='store', default='GCTGTTGAAGGCTCGCGATGCACACGCTCTGGTACAAGGAA')
     parser.add_argument('--threeprimeRegion', action='store', default='AAGGCACTGGGCAATACGAGCTCAAGCCAGTCTCGCAGTCC')
@@ -207,3 +208,6 @@ if __name__=='__main__':
     df= df.loc[~df['RefSeq'].isna()]
 
     df.to_csv(args.o, sep='\t', index=False)
+
+    if args.clusterAnnotation is not None:
+        df[['clusterID', 'SEQID']].to_csv(args.clusterAnnotation, sep='\t', index=False)

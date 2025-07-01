@@ -5,13 +5,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import sys
 from scikits.bootstrap import bootstrap
+# from sklearn import cluster
 from statsmodels.distributions.empirical_distribution import ECDF
+import scipy.stats as st
 import warnings
 import itertools
 import scipy.stats as st
 import copy
 import datetime
+from pandarallel import pandarallel
 from fittinglibs import variables
+from fittinglibs.models import *
+from fittinglibs import models
 from .variables import fittingParameters
 
 def getFitParam(param, concentrations=None, init_val=None, vary=None, ub=None, lb=None):
@@ -179,7 +184,7 @@ def fitSingleCurve(x, y, fitParameters, func,
     # do the fit
     results = minimize(func, params,
                        args=(x,),
-                       kws=kwargs, **min_kws)
+                       kws=kwargs, method='least_squares', **min_kws)
 
     
     # find rqs
@@ -267,8 +272,9 @@ def enforceFmaxDistribution(median_fluorescence, fmaxDist, verbose=None, cutoff=
                   median_fluorescence[-1]*100/lowerbound)))
     return redoFitFmax
 
+
 def getClusterIndices(subSeries, n_samples=100, enforce_fmax=False, verbose=False):
-    """Based on indices, find a list of sets of lcusters to do bootstrapping on."""
+    """Based on indices, find a list of sets of clusters to do bootstrapping on."""
     # find number of samples to bootstrap
     numTests = len(subSeries)
     if numTests <10 and np.power(numTests, numTests) <= n_samples and not enforce_fmax:
@@ -364,18 +370,19 @@ def bootstrapCurves(x, subSeries, fitParameters, fmaxDist, func,
     results.loc['flag'] = enforce_fmax
     return results, singles
 
-def findRsq(x, y, params, func):
+def findRsq(y, fit_result):
     """find rsq of a fit."""
     ss_total = np.sum((y - y.mean())**2)
-    ss_error = np.sum((y - func(params, x))**2)
-    return 1-ss_error/ss_total
+    ss_error = np.sum((y - fit_result.eval())**2)
+    return 1 - ss_error/ss_total
 
 
 def findProcessedSingles(singles, param_names):
-    """Given the output of the singles, find the upper and lower bounds."""
+    """Given the output of the singles, find the upper and lower bounds and std error."""
     # save results
-    data = pd.concat({param:singles.loc[:, param].quantile([0.5, 0.025, 0.975]) for param in param_names}, axis=1)
-    data.index = ['', '_lb', '_ub']
+    data = pd.concat({param: pd.concat((singles.loc[:, param].quantile([0.5, 0.025, 0.975]), pd.Series(singles.loc[:, param].std()))) for param in param_names}, axis=1)
+    postfix = ''#'_final'
+    data.index = [s+postfix for s in ['', '_lb', '_ub', '_se']]
     results = data.stack().swaplevel(0,1).sort_index()
     results.index = [''.join(s) for s in results.index.tolist()]
     return results
@@ -512,3 +519,300 @@ def returnResultsFromParams(params, results, y):
     final_params.loc['exit_flag'] = results.ier
     final_params.loc['rmse'] = rmse
     return final_params
+
+
+##################################
+##### Begin Yuxi's functions #####
+##################################
+
+def returnFittingResults(fit, y, return_type='dict'):
+    """
+    Process fitting result and return
+    Args:
+        fit - lmfit result object
+        y - data
+        return_type - str. {'dict', 'obj', 'list'}
+    """
+    if return_type == 'obj':
+        return fit
+    else:
+        result_dict = fit.best_values
+
+        for param in fit.params.values():
+            result_dict['%s_stderr'%param.name] = param.stderr
+
+        result_dict['RMSE'] = np.sqrt(np.nanmean((y - fit.best_fit)**2))
+        result_dict['rsqr'] = findRsq(y, fit)
+        
+        if return_type == 'dict':
+            return result_dict
+        elif return_type == 'list':
+            return list(result_dict.values())
+        else:
+            raise 'return_type must be obj, dict or list'
+
+# ------ Fit single cluster ------
+
+def fit_single_cluster(y, model, return_type='dict'):
+    """
+    Fit single cluster with minimum constraints.
+    Args:
+        y - signal series
+        T - xdata array, temperatures
+        model - lmfit model object
+        return_type - str. {'dict', 'obj', 'list'}
+    Returns:
+        dict containing best_values + redchi if not return_result_obj
+        lmfit ModelResult obj if True
+    """
+    T = model.T
+    params = model.guess(y, x=T)
+    fit = model.fit(y, params, T=T)
+    
+    return returnFittingResults(fit, y=y, return_type=return_type)
+        
+        
+def fit_single_clusters_in_df(model, series_df, conditions, parallel=False):
+    """
+    Apply the `fit_single_cluster()` to the dataframe
+    """
+    if parallel:
+        fitted_df = series_df[conditions].parallel_apply(lambda y: fit_single_cluster(y, model), axis=1, result_type='expand')
+    else:
+        fitted_df = series_df[conditions].apply(lambda y: fit_single_cluster(y, model), axis=1, result_type='expand')
+    
+    return fitted_df
+
+# ------ Find distributions ------
+
+def fit_ecdf(ecdf, model, return_type='dict'):
+    """
+    Fit ecdf of fmax or fmin with a gamma distribution.
+    Args:
+        ecdf - ecdf object of fmax or fmin
+        model - lmfit model object
+        return_type - str. {'dict', 'obj', 'list'}
+    Returns:
+        dict containing best_values if not return_result_obj
+        or lmfit ModelResult obj
+        or a list
+    """
+    params = model.getParams()
+    
+    fit = model.fit(ecdf.y, params, x=ecdf.x)
+    
+    if return_type == 'obj':
+        return fit
+    else:
+        result_dict = fit.best_values
+        # result_dict.pop('x')
+        for param in fit.params.values():
+            result_dict['%s_stderr'%param.name] = param.stderr
+
+        result_dict['RMSE'] = np.sqrt(np.nanmean((ecdf.y - fit.best_fit)**2))
+        result_dict['rsqr'] = findRsq(ecdf.y, fit)
+        
+        if return_type == 'dict':
+            return result_dict
+        elif return_type == 'list':
+            return list(result_dict.values())
+        else:
+            raise 'return_type must be obj, dict or list'
+
+
+def fit_fmax(variant_table, variant_filter=None, fmax_filter=None, fit_fmin=False):
+    """
+    Get ecdf of fmax and fit to a gamma
+    Returns:
+        a dict
+    """
+    if fit_fmin:
+        var_name = 'fmin'
+    else:
+        var_name = 'fmax'
+    if variant_filter is None or fmax_filter is None:
+        vec = variant_table[var_name]
+    else:
+        vec = variant_table.query(variant_filter).query(fmax_filter)[var_name]
+    ecdf = ECDF(vec)
+    model = models.GammaModel(var_name=var_name)
+
+    return fit_ecdf(ecdf, model)
+
+
+def fit_sigma_n_fmax(good_variants_table, fit_fmin=False, variant_n_size_cutoff=10, return_type='dict'):
+    
+    if fit_fmin:
+        var_name = 'fmin'
+    else:
+        var_name = 'fmax'
+
+    group_size = good_variants_table.groupby('numTests').size()
+    valid_n = group_size.index[group_size > variant_n_size_cutoff]
+    fmax_std = good_variants_table.groupby('numTests').std().loc[valid_n, var_name]
+
+    model = models.SigmaNModel()
+    params = model.guess()
+    fit = model.fit(fmax_std, params, n=fmax_std.index)
+
+    return returnFittingResults(fit, y=fmax_std, return_type=return_type)
+
+# ------ Refine fit variants ------
+
+
+def add_fit_stats_to_results(results, model, sub_cluster_table, sigma_estimate=None):
+    params = model.get_params_from_results(results, postfix='')
+    signal_eval = model.eval(params, T=model.T)
+    y = np.median(sub_cluster_table, axis=0)
+
+    ### rsqr & rmse ###
+    ss_total = np.nansum((y - y.mean())**2)
+    ss_error = np.nansum((y - signal_eval)**2)
+    rsqr = 1 - ss_error / ss_total
+    rmse = np.sqrt(ss_error)
+
+    results['rsqr'] = rsqr
+    results['RMSE'] = rmse
+
+    results['enforce_fmax'], results['enforce_fmin'] = model.decide_enforce_fmax_distribution(y)
+
+    ### chi-squared ###
+    # degrees of freedom
+    n_param = 4 - results['enforce_fmax'] - results['enforce_fmin']
+    n_obs = np.count_nonzero(~np.isnan(sub_cluster_table.values.flatten()))
+    dof = n_obs - n_param
+    # n_T = sub_cluster_table.shape[1]
+
+    results['dof'] = dof
+    results['chisq'] = np.sum(np.sum((sub_cluster_table - signal_eval)**2, axis=0) / np.nanvar(sub_cluster_table, axis=0))# / (dof)
+    if not sigma_estimate is None:
+        # Use globally estimated uncertainty
+        results['chisq_global_sigma'] = np.sum(np.sum((sub_cluster_table - signal_eval)**2, axis=0) / sigma_estimate**2) 
+    # results['chisq_median'] = np.sum((y - signal_eval)**2 / np.nanvar(sub_cluster_table, axis=0)) / (n_T - n_param)
+
+    return results
+
+
+def add_median_signal(results, sub_cluster_table):
+    """
+    Add median of all the clusters, their stderr at each temperature,
+    and the number of clusters to the variant table
+    Args:
+
+        sub_cluster_table - sliced dataframe
+    """
+    median_signal = np.median(sub_cluster_table, axis=0)
+    conditions = sub_cluster_table.columns
+    std_signal = np.nanstd(sub_cluster_table, axis=0)
+    std_conditions = [s+'_std' for s in sub_cluster_table.columns]
+
+    out = pd.concat( (results, pd.Series(data=median_signal, index=conditions, dtype=float),
+        pd.Series(data=std_signal, index=std_conditions, dtype=float)))
+    out['n_clusters'] = sub_cluster_table.shape[0]
+    
+    return out
+
+def fit_median_variant(median_signal, model, params, weights=None, do_not_fit=False):
+    """
+    Fit median of signal in a single bootstrap run.
+    TODO: implement do_not_fit
+    """
+    fit = model.fit(median_signal, params, T=model.T, weights=weights)
+
+    result = fit.best_values
+    result.pop('T')
+
+    return result
+    
+
+def fit_variant_bootstrap(sub_cluster_table, model, weighted_fit=False, 
+        verbose=False, n_samples=100, sigma_estimate=None):
+
+    median_signal = np.median(sub_cluster_table, axis=0)
+    enforce_fmax, enforce_fmin = model.decide_enforce_fmax_distribution(median_signal)
+    if enforce_fmax:
+        fmaxes = model.make_fmaxes(n_samples)
+    if enforce_fmin:
+        fmins = model.make_fmaxes(n_samples, var_name="fmin")
+
+    indices = getClusterIndices(sub_cluster_table, n_samples=n_samples, verbose=verbose)
+
+    # bootstraping
+    singles = {}
+    for i, clusters in enumerate(indices):
+        median_fluorescence = np.nanmedian(sub_cluster_table.loc[clusters], axis=0)
+        # Set the weights for fitting, 1/var
+        # if any temperature point has a weird weight, don't weight at all 
+        if weighted_fit:
+            weights = 1 / np.nanvar(sub_cluster_table.loc[clusters], axis=0)
+            if not np.all(np.isfinite(weights)):
+                weights = None
+        else:
+            weights = None
+
+        if np.isfinite(median_fluorescence).sum() <= 4:
+            do_not_fit = True
+        else:
+            do_not_fit = False
+
+        params = model.guess(enforce_fmax, enforce_fmin)
+        if enforce_fmax:
+            params["fmax"].set(value=fmaxes[i], vary=False)
+        else:
+            params["fmax"].set(value=model.variant_table_row["fmax_init"], vary=True)
+
+        if enforce_fmin:
+            params["fmin"].set(value=fmins[i], vary=False)
+        else:
+            params["fmin"].set(value=model.variant_table_row["fmin_init"], vary=True)
+
+        singles[i] = fit_median_variant(median_fluorescence, model, params, weights=weights, do_not_fit=do_not_fit)
+    
+    singles = pd.DataFrame(singles).T
+    singles['dG_37'] = singles['dH'] * (1 - (37 + 273.15)/singles['Tm'])
+    singles['dS'] = singles['dH'] / singles['Tm']
+    results = findProcessedSingles(singles, model.param_names + ['dG_37', 'dS'])
+    results = add_fit_stats_to_results(results, model, sub_cluster_table, sigma_estimate=sigma_estimate)
+    results = add_median_signal(results, sub_cluster_table)
+
+    return results
+
+
+def fit_single_variant(row, annotated_results, conditions, fmax_params_dict, xvalues, variant_col, n_samples=100, sigma_estimate=None, weighted_fit=False):
+
+    model = MeltCurveRefineModel(fmax_params_dict, row, T=xvalues)
+    sub_cluster_table = annotated_results.query('%s == "%s"' % (variant_col, row.name))[conditions]
+    return fit_variant_bootstrap(sub_cluster_table, model, n_samples=n_samples, sigma_estimate=sigma_estimate, weighted_fit=weighted_fit)
+
+
+
+def fit_variant_bootstrap_df(cluster_table, variant_table, xvalues, annotated_clusters, fmax_params_dict, conditions, parallel=False, weighted_fit=False, n_samples=100):
+    """
+    fit all variants
+    """
+
+    variants = variant_table.index
+    variant_col = variants.name
+    if not (variant_col in cluster_table.columns):
+        annotated_cluster_table = pd.merge(left=annotated_clusters.dropna(), right=cluster_table, on='clusterID').set_index('clusterID')
+    else:
+        annotated_cluster_table = cluster_table
+    assert(variant_col in annotated_cluster_table.columns)
+    
+    # estimate of sigma as a function of temperature to calculate chisq_glabal_sigma
+    sigma_vec = annotated_cluster_table.groupby(variant_col).apply(lambda x: np.nanstd(x, axis=0))
+    sigma_estimate = np.nanmedian(np.asarray(sigma_vec.values.tolist()), axis=0)
+
+    fitted_variant_table = pd.DataFrame(index=variants)
+
+    if parallel:
+        pandarallel.initialize()
+        fitted_variant_table = variant_table.parallel_apply(
+            lambda row: fit_single_variant(row, annotated_cluster_table, conditions, fmax_params_dict, xvalues, variant_col, n_samples=n_samples, sigma_estimate=sigma_estimate, weighted_fit=weighted_fit),
+            axis=1, result_type='expand')
+    else:
+        fitted_variant_table = variant_table.apply(
+            lambda row: fit_single_variant(row, annotated_cluster_table, conditions, fmax_params_dict, xvalues, variant_col, n_samples=n_samples, sigma_estimate=sigma_estimate, weighted_fit=weighted_fit),
+            axis=1, result_type='expand')
+
+    return fitted_variant_table

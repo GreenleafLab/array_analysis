@@ -10,7 +10,16 @@ scripts/test.py
 *.err
 *.out
 .#*
+._*
+*.sh#
 #Snakemake#
 *.h5
 cpseriestest.csv
 workspace.code-workspace
+*.ipynb*
+scripts/notebook
+test.*
+_README*
+*DS_Store
+.cache/
+.conda/

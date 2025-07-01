@@ -1,8 +1,9 @@
 # array analysis snakemake workflow
 
-Yuxi Ke, Nov 2021
 
 # Setup
+
+We assume `conda` is already installed on the machine.
 
 ## Install snakemake
 
@@ -23,7 +24,14 @@ conda install -y -n snakemake -c conda-forge mamba
 
 while snakemake environment is activated.
 
-## Install Ben Parks' snakemake slurm profile
+# Install a snakemake slurm profile
+
+You would need to install a slurm profile if you want to submit jobs on computer clusters. 
+If you have a workstation with enough resources, this step could be skipped.
+
+## Stanford Sherlock
+
+Please install the profile from Ben Parks:
 
 ```bash
 git clone https://github.com/bnprks/snakemake-slurm-profile.git
@@ -40,7 +48,14 @@ Ben's defaults are:
 "memory" : "8G"
 ```
 
-To use this slurm profile in the Snakefile with costumed parameters, add in the `params:` section:
+## Other clusters
+
+Follow the instructions [here](https://snakemake.readthedocs.io/en/v7.19.1/executing/cluster.html) to set up.
+
+
+## Using the slurm profile in Snakefile
+
+To use the slurm profile in the Snakefile with custom parameters, add in the `params:` section:
 
 ```bash
 rule my_job:
@@ -238,6 +253,15 @@ You will get:
 - CPseq file aligned to the designed library and an aggregated STATS report
 - TODO: Add QC plots of the sequencing results to the workflow
 
+
+### Imaging data processing
+
+Note: array data tif files should have the same prefix, i.e. experiment name like `NNNlib2b_DNA`, for snakemake to match the filenames successfully.
+
+1. In the config file, modify `processingType` to `post-array`.
+
+2. If you need to tune the global variables for registration, the file is located at `scripts/array_tools/GlobalVars.m`. Common parameters to play with includes `correlationSuccessPeakHeight`, `maxOffsetGlobalRegistration`, and `scalingFactor`.
+
 ## Run it
 
 Run with `-np` for a dry run. Snakemake will print out the commands to execute.
@@ -259,4 +283,13 @@ To execute, run
 snakemake --profile slurm --use-conda
 ```
 
-The jobs will be automatically submitted in the right order. I tested once and if you shut down you computer after the first jobs were submitted and walk away, it should be fine even if the future jobs were not yet submitted.
+The jobs will be automatically submitted in the right order.
+
+The first time you run the pipeline, snakemake will use the yaml files in `envs/` to install conda
+environments. Version numbers of packages are included in these files. After the first run, these installed conda environments will be used and the future runs will be faster.
+
+If you shut down you computer after the first jobs were submitted and walk away, it should be fine even if the future jobs were not yet submitted.
+
+
+------
+Yuxi Ke (keyuxi.chn@gmail.com)

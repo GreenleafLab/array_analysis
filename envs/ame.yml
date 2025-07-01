@@ -1,7 +1,7 @@
 name: ame
 dependencies:
   - python=2.7
-  - numpy
-  - pandas
-  - joblib
-  - biopython
+  - numpy=1.16.6
+  - pandas=0.24.2
+  - joblib=0.14.1
+  - biopython=1.74
